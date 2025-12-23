@@ -30,3 +30,19 @@ exports.updateUser = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+exports.deleteUser = async (req, res) => {
+    const { id } = req.params;
+    console.log(id);
+    try {
+        const [result] = await pool.query('DELETE FROM users WHERE id = ?', [id]);
+        
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "User not found" });
+        }
+        
+        res.json({ message: "User deleted successfully" });
+    } catch (err) {
+        console.error("Delete Error:", err);
+        res.status(500).json({ error: "Failed to delete user from database" });
+    }
+};

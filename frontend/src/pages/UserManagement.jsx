@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { UserPlus, Edit2, X } from 'lucide-react';
+import { UserPlus, Edit2, X, Trash2 } from 'lucide-react'; // Added Trash2 icon
+import { useSnackbar } from '../context/SnackbarContext';
+import { useConfirm } from '../context/ConfirmContext';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -8,34 +10,66 @@ const UserManagement = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [formData, setFormData] = useState({ name: '', email: '' });
+  
+  const showSnackbar = useSnackbar();
+  const askConfirmation = useConfirm();
+
   const fetchUsers = useCallback(async () => {
     try {
       const response = await axios.get('http://localhost:5000/api/users');
       setUsers(response.data);
-    } catch (err) {
-      console.error("Error fetching users:", err);
+    } catch (error) {
+      showSnackbar("Failed to load users", "error");
     }
-  }, []);
+  }, [showSnackbar]);
+
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
+
+  // NEW: Delete Logic
+  const handleDelete = (user) => {
+    askConfirmation(
+      "Confirm Deletion",
+      `Are you sure you want to remove ${user.name}? This action cannot be undone.`,
+      async () => {
+        try {
+          await axios.delete(`http://localhost:5000/api/users/${user.id}`);
+          showSnackbar("User deleted successfully", "success");
+          fetchUsers();
+        } catch (err) {
+          showSnackbar(err.response?.data?.error || "Failed to delete user", "error");
+        }
+      }
+    );
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const action = isEditing ? 'update' : 'add';
-    if (!window.confirm(`Are you sure you want to ${action} this user?`)) return;
-    try {
-      if (isEditing) {
-        await axios.put(`http://localhost:5000/api/users/${selectedUser.id}`, formData);
-      } else {
-        await axios.post('http://localhost:5000/api/users', formData);
+    
+    askConfirmation(
+      isEditing ? "Update User" : "Add User",
+      `Are you sure you want to ${action} ${formData.name}?`,
+      async () => {
+        try {
+          if (isEditing) {
+            await axios.put(`http://localhost:5000/api/users/${selectedUser.id}`, formData);
+            showSnackbar("User updated successfully", "success");
+          } else {
+            await axios.post('http://localhost:5000/api/users', formData);
+            showSnackbar("User added successfully", "success");
+          }
+          setShowModal(false);
+          setFormData({ name: '', email: '' });
+          fetchUsers(); 
+        } catch (err) {
+          showSnackbar(err.response?.data?.error || "An error occurred while saving.", "error");
+        }
       }
-      setShowModal(false);
-      setFormData({ name: '', email: '' });
-      fetchUsers(); 
-    } catch (err) {
-      alert(err.response?.data?.error || "An error occurred while saving.");
-    }
+    );
   };
+
   const openEditModal = (user) => {
     setIsEditing(true);
     setSelectedUser(user);
@@ -80,28 +114,42 @@ const UserManagement = () => {
                   <td className="px-6 py-4 font-medium text-gray-800">{user.name}</td>
                   <td className="px-6 py-4 text-gray-600">{user.email}</td>
                   <td className="px-6 py-4 text-center">
-                    <button 
-                      onClick={() => openEditModal(user)} 
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition"
-                      title="Edit User"
-                    >
-                      <Edit2 size={18} />
-                    </button>
+                    <div className="flex items-center justify-center gap-2">
+                        {/* Edit Button */}
+                        <button 
+                          onClick={() => openEditModal(user)} 
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition"
+                          title="Edit User"
+                        >
+                          <Edit2 size={18} />
+                        </button>
+                        
+                        {/* NEW: Delete Button */}
+                        <button 
+                          onClick={() => handleDelete(user)} 
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-full transition"
+                          title="Delete User"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                    </div>
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
                 <td colSpan="4" className="px-6 py-10 text-center text-gray-400">
-                  No users found. Click "Add User" to get started.
+                  No users found.
                 </td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
+
+      {/* ... Modal Code stays exactly as before ... */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <form 
             onSubmit={handleSubmit} 
             className="bg-white p-6 rounded-xl shadow-2xl max-w-md w-full relative animate-in fade-in zoom-in duration-200"

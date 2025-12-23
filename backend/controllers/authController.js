@@ -15,7 +15,7 @@ exports.googleLogin = async (req, res) => {
 
         res.cookie('session_token', token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production', 
+            secure: false, 
             sameSite: 'lax',
             maxAge: 3600000 
         });

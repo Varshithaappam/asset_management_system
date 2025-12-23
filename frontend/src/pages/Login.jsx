@@ -3,22 +3,26 @@ import { GoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { ShieldCheck } from 'lucide-react';
-
+import { useSnackbar } from '../context/SnackbarContext';
 const Login = ({ setAuthUser }) => {
   const navigate = useNavigate();
+  const showSnackbar = useSnackbar();
 
-  const handleLoginSuccess = async (googleResponse) => {
-    try {
-      const response = await axios.post('http://localhost:5000/api/auth/google', {
-        token: googleResponse.credential,
-      }, { withCredentials: true }); 
+  const handleLoginSuccess = async (response) => {
+  try {
+    const res = await axios.post('http://localhost:5000/api/auth/google', {
+      token: response.credential,
+    }, { withCredentials: true });
 
-      setAuthUser(response.data.user);
-      navigate('/');
-    } catch (error) {
-      alert(error.response?.data?.error || "Login failed. Please try again.");
+    if (res.data.user) {
+      showSnackbar("Successfully Authenticated!", "success");
+      setAuthUser(res.data.user);
+      // window.location.href = "/"; 
     }
-  };
+  } catch (err) {
+    showSnackbar(err.response?.data?.error || "User not authorized in system", "error");
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900 p-4">
@@ -35,10 +39,11 @@ const Login = ({ setAuthUser }) => {
         </p>
 
         <div className="flex justify-center">
-          <GoogleLogin 
+          <GoogleLogin
             onSuccess={handleLoginSuccess}
             onError={() => console.log('Login Failed')}
-            useOneTap
+            useOneTap={false} 
+            itp_support={true}
           />
         </div>
 
