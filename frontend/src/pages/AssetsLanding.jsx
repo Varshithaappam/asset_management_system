@@ -46,16 +46,17 @@ const AssetsLanding = () => {
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
+    <div className=''>
+    <div className="p-8 max-w-7xl mx-auto ">
       <div className="flex justify-between items-center mb-10">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Assets</h1>
-          <p className="text-gray-500 mt-1">Manage and track company hardware categories</p>
+          <p className="text-gray-500 mt-1">You can add and manage asset types</p>
         </div>
         
         <button 
           onClick={() => setShowAddModal(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 shadow-lg shadow-blue-200 transition-all"
+          className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl flex items-center gap-2 shadow-lg shadow-green-200 transition-all"
         >
           <Plus size={20} /> Add Asset Type
         </button>
@@ -79,7 +80,7 @@ const AssetsLanding = () => {
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <form onSubmit={handleAddAssetType} className="bg-white p-8 rounded-2xl shadow-2xl max-w-md w-full">
-            <h3 className="text-xl font-bold mb-6 text-gray-800">Add New Category</h3>
+            <h3 className="text-xl font-bold mb-6 text-gray-800">Add New</h3>
             <div className="mb-6">
               <label className="block text-sm font-semibold text-gray-700 mb-2">Category Name</label>
               <input 
@@ -103,12 +104,13 @@ const AssetsLanding = () => {
                 type="submit" 
                 className="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 shadow-md shadow-blue-100"
               >
-                Create Category
+                Create
               </button>
             </div>
           </form>
         </div>
       )}
+    </div>
     </div>
   );
 };

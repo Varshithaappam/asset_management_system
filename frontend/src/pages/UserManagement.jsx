@@ -56,7 +56,7 @@ const UserManagement = () => {
         <h2 className="text-2xl font-bold text-gray-800">User Management</h2>
         <button 
           onClick={openAddModal}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition"
+          className="bg-yellow-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-yellow-700 transition"
         >
           <UserPlus size={18} /> Add User
         </button>

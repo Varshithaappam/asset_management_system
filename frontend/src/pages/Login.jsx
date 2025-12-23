@@ -21,28 +21,28 @@ const Login = ({ setAuthUser }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center border border-gray-100">
+    <div className="min-h-screen flex items-center justify-center bg-gray-900 p-4">
+      <div className="max-w-md w-full hover:bg-gray-700 bg-gray-600 rounded-2xl shadow-2xl shadow-black p-8 text-center border border-gray-600">
         <div className="flex justify-center mb-6">
-          <div className="p-3 bg-blue-50 rounded-full text-blue-600">
+          <div className="p-3 bg-black/100 rounded-full text-blue-600">
             <ShieldCheck size={50} />
           </div>
         </div>
         
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">Asset Management</h1>
-        <p className="text-gray-500 mb-8 text-sm">
-          Please sign in with yourGoogle account.
+        <h1 className="text-2xl font-bold text-white mb-2">Asset Management</h1>
+        <p className="text-white mb-8 text-sm">
+          Please sign in with your Google account.
         </p>
 
         <div className="flex justify-center">
-          <GoogleLogin
+          <GoogleLogin 
             onSuccess={handleLoginSuccess}
             onError={() => console.log('Login Failed')}
             useOneTap
           />
         </div>
 
-        <p className="mt-8 text-xs text-gray-400">
+        <p className="mt-8 text-xs text-white">
           Only authorized administrators can access this system.
         </p>
       </div>
