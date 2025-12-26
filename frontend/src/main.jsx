@@ -12,10 +12,10 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
       <BrowserRouter>
         <SnackbarProvider>
-        <ConfirmProvider> 
-          <App />
-        </ConfirmProvider>
-      </SnackbarProvider>
+          <ConfirmProvider>
+            <App />
+          </ConfirmProvider>
+        </SnackbarProvider>
       </BrowserRouter>
     </GoogleOAuthProvider>
   </React.StrictMode>

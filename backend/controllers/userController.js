@@ -34,11 +34,11 @@ exports.deleteUser = async (req, res) => {
     // console.log(id);
     try {
         const [result] = await pool.query('DELETE FROM users WHERE id = ?', [id]);
-        
+
         if (result.affectedRows === 0) {
             return res.status(404).json({ error: "User not found" });
         }
-        
+
         res.json({ message: "User deleted successfully" });
     } catch (err) {
         console.error("Delete Error:", err);

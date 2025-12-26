@@ -67,7 +67,7 @@ const AssetsLanding = () => {
     <div 
       key={type.id} 
       onClick={() => navigate(`/assets/${type.name}`)} 
-      className="group bg-gray-800 p-6 rounded-2xl border border-gray-700 hover:bg-gray-700 hover:border-blue-500 transition-all cursor-pointer shadow-xl"
+      className="group bg-gray-800 p-6 rounded-2xl border border-gray-700 hover:bg-gray-700 hover:border-gray-500 transition-all cursor-pointer shadow-xl"
     >
       <div className="flex flex-col items-center text-center mb-4">
         <h3 className="font-bold text-xl">{type.name}</h3>
@@ -91,6 +91,11 @@ const AssetsLanding = () => {
       {type.assigned_count}
     </span>
   </div>
+  <div className="flex justify-between items-center text-sm">
+    <span className="text-gray-400">Total Repairs</span>
+    <span className="font-mono font-bold text-orange-400">{type.repair_count}</span>
+  </div>
+  
 </div>
 
     </div>

@@ -7,7 +7,7 @@ router.get('/details/:typeName', assetController.getAssetDetailsByCategory);
 router.post('/', assetController.addAsset);
 router.get('/type/:typeId', assetController.getAssetsByType);
 // -----------
-router.get('/id/:assetId', assetController.getAssetDetails); 
+router.get('/id/:assetId', assetController.getAssetDetails);
 router.get('/history/:assetId', assetController.getAssetHistory);
 router.post('/reassign', assetController.reassignAsset);
 router.post('/assignments', assetController.assignNewAsset);

@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowLeft, History, Monitor, Cpu, Layers, UserPlus, CheckCircle } from 'lucide-react';
+import { ArrowLeft, History, Monitor, Cpu, Layers, UserPlus, CheckCircle, Wrench,Plus } from 'lucide-react';
 import { useSnackbar } from '../context/SnackbarContext'; 
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography } from '@mui/material';
+import { Dialog, DialogTitle, TextField,DialogContent, DialogActions, Button, Typography } from '@mui/material';
 
 const AssetHistory = () => {
     const { assetId } = useParams();
     const navigate = useNavigate();
     const showSnackbar = useSnackbar();
+    
     const [history, setHistory] = useState([]);
+    const [repairs, setRepairs] = useState([]); 
     const [details, setDetails] = useState(null);
+    const [viewMode, setViewMode] = useState('assignment'); 
 
     const [isAssigning, setIsAssigning] = useState(false);
     const [showConfirmDialog, setShowConfirmDialog] = useState(false); 
@@ -26,6 +29,8 @@ const AssetHistory = () => {
             setDetails(detRes.data);
             const histRes = await axios.get(`http://localhost:5000/api/assets/history/${assetId}`);
             setHistory(histRes.data);
+            const repairRes = await axios.get(`http://localhost:5000/api/assets/repairs/${assetId}`);
+            setRepairs(repairRes.data);
         } catch (err) {
             console.error("Error loading asset data:", err);
         }
@@ -35,12 +40,13 @@ const AssetHistory = () => {
         fetchAssetData();
     }, [assetId]);
 
-    // console.log("Asset Details222   :", history);
     const isAssetFree = history.length === 0 || (history[0] && history[0].to_date !== null && history[0].to_date !== "-");
+    
     const handleFormSubmit = (e) => {
         e.preventDefault();
         setShowConfirmDialog(true);
     };
+
     const processAssignment = async () => {
         try {
             const response = await axios.post('http://localhost:5000/api/assets/reassign', {
@@ -59,6 +65,39 @@ const AssetHistory = () => {
             setShowConfirmDialog(false);
         }
     };
+    const [showRepairForm, setShowRepairForm] = useState(false);
+const [repairData, setRepairData] = useState({
+    issue: '',
+    amount: '',
+    date_reported: new Date().toISOString().split('T')[0]
+});
+
+const handleRepairSubmit = async (e) => {
+    e.preventDefault();
+    const activeEmployee = history.find(h => h.to_date === null);
+    
+    if (!activeEmployee) {
+        showSnackbar("No active employee found to assign repair to.", "error");
+        return;
+    }
+
+    try {
+        await axios.post('http://localhost:5000/api/assets/add-repair', {
+            asset_id: assetId,
+            date_reported: repairData.date_reported,
+            issue_reported: repairData.issue,
+            amount: repairData.amount,
+            resolver_comments: `Reported by ${activeEmployee.employee_name}` 
+        });
+
+        showSnackbar("Repair record added successfully", "success");
+        setShowRepairForm(false);
+        setRepairData({ issue: '', amount: '', date_reported: new Date().toISOString().split('T')[0] });
+        fetchAssetData();
+    } catch (err) {
+        showSnackbar("Failed to add repair", "error");
+    }
+};
 
     return (
         <div className="min-h-screen bg-gray-900 text-white p-8">
@@ -131,7 +170,6 @@ const AssetHistory = () => {
                     <div className="mb-6 flex justify-end">
                         <button
                             onClick={() => setIsAssigning(true)}
-                            disabled={!isAssetFree}
                             className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg"
                         >
                             <UserPlus size={20} /> Assign Asset to New Employee
@@ -166,66 +204,134 @@ const AssetHistory = () => {
                 )}
 
                 <div className="bg-gray-800 rounded-2xl shadow-2xl overflow-hidden border border-gray-700">
-                    <div className="p-6 border-b border-gray-700 flex items-center gap-2">
-                        <History size={20} className="text-blue-500" />
-                        <span className="font-bold">Assignment History</span>
+                    <div className="p-6 border-b border-gray-700 flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2">
+                                <History size={20} className="text-blue-500" />
+                                <span className="font-bold">
+                                    {viewMode === 'assignment' ? 'Assignment History' : 'Repair History'}
+                                </span>
+                            </div>
+                            <div className="flex bg-gray-900 p-1 rounded-lg border border-gray-700">
+                                <button 
+                                    onClick={() => setViewMode('assignment')}
+                                    className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase transition-all ${viewMode === 'assignment' ? 'bg-blue-600 text-white' : 'text-gray-500'}`}
+                                >
+                                    Assignments
+                                </button>
+                                <button 
+                                    onClick={() => setViewMode('repair')}
+                                    className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase transition-all ${viewMode === 'repair' ? 'bg-orange-600 text-white' : 'text-gray-500'}`}
+                                >
+                                    Repairs
+                                </button>
+                            </div>
+                        </div>
+                        {viewMode === 'repair' && (
+        <button 
+            onClick={() => setShowRepairForm(true)}
+            className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-lg"
+        >
+            <Plus size={16} /> Add Repair
+        </button>
+    )}
                     </div>
 
                     <table className="w-full text-left">
-                        <thead className="bg-gray-900/50 text-sm font-semibold text-gray-400">
-                            <tr>
-                                <th className="px-6 py-4">Employee Name</th>
-                                <th className="px-6 py-4">Employee ID</th>
-                                <th className="px-6 py-4">From Date</th>
-                                <th className="px-6 py-4">To Date</th>
-                                <th className="px-6 py-4">Remarks</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-700">
-                            {history.map((entry, index) => (
-                                <tr key={index}
-                                    onClick={() => navigate(`/assets/deep-view/${assetId}/${entry.employee_id}`)}
-                                    className="hover:bg-gray-700/50 cursor-pointer transition-all border-b border-gray-700/50"
-                                >
-                                    <td className="px-6 py-4 font-medium text-white">{entry.employee_name}</td>
-                                    <td className="px-6 py-4 text-gray-400 font-mono text-sm">{entry.employee_id}</td>
-                                    <td className="px-6 py-4 text-gray-300">{entry.from_date}</td>
-                                    <td className="px-6 py-4 text-gray-300">
-                                        {entry.to_date ? (
-                                            entry.to_date
-                                        ) : (
-                                            <span className="text-green-500 font-bold px-2 py-1 bg-green-500/10 rounded">
-                                                Active / Present
-                                            </span>
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-gray-500 italic">
-                                        {entry.remarks || "-"}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
+                        {viewMode === 'assignment' ? (
+                            <>
+                                <thead className="bg-gray-900/50 text-sm font-semibold text-gray-400">
+                                    <tr>
+                                        <th className="px-6 py-4">Employee Name</th>
+                                        <th className="px-6 py-4">Employee ID</th>
+                                        <th className="px-6 py-4">From Date</th>
+                                        <th className="px-6 py-4">To Date</th>
+                                        <th className="px-6 py-4">Remarks</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-700">
+                                    {history.map((entry, index) => (
+                                        <tr key={index}
+                                            onClick={() => navigate(`/assets/deep-view/${assetId}/${entry.employee_id}`)}
+                                            className="hover:bg-gray-700/50 cursor-pointer transition-all border-b border-gray-700/50"
+                                        >
+                                            <td className="px-6 py-4 font-medium text-white">{entry.employee_name}</td>
+                                            <td className="px-6 py-4 text-gray-400 font-mono text-sm">{entry.employee_id}</td>
+                                            <td className="px-6 py-4 text-gray-300">{entry.from_date}</td>
+                                            <td className="px-6 py-4 text-gray-300">
+                                                {entry.to_date ? entry.to_date : <span className="text-green-500 font-bold px-2 py-1 bg-green-500/10 rounded">Active / Present</span>}
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-gray-500 italic">{entry.remarks || "-"}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </>
+                        ) : (
+                            <>
+                                <thead className="bg-gray-900/50 text-sm font-semibold text-gray-400">
+                                    <tr>
+                                        <th className="px-6 py-4">Employee Name</th>
+                                        <th className="px-6 py-4">Issue</th>
+                                        <th className="px-6 py-4">Amount</th>
+                                        <th className="px-6 py-4">Date Reported</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-700">
+                                    {repairs.length > 0 ? repairs.map((repair, index) => (
+                                        <tr key={index} className="hover:bg-gray-700/50 transition-all border-b border-gray-700/50">
+                                            <td className="px-6 py-4 font-medium text-white">{repair.employee_name}</td>
+                                            <td className="px-6 py-4 text-gray-300">{repair.issue_reported}</td>
+                                            <td className="px-6 py-4 text-orange-400 font-bold">₹{repair.amount}</td>
+                                            <td className="px-6 py-4 text-gray-400 font-mono text-sm">{repair.date_reported}</td>
+                                        </tr>
+                                    )) : (
+                                        <tr>
+                                            <td colSpan="4" className="px-6 py-10 text-center text-gray-500 italic">No repair history found for this device.</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </>
+                        )}
                     </table>
                 </div>
             </div>
 
-            <Dialog open={showConfirmDialog} onClose={() => setShowConfirmDialog(false)}>
-                <DialogTitle sx={{ bgcolor: '#111827', color: 'white', display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <CheckCircle className="text-green-500" /> Confirm Assignment
-                </DialogTitle>
-                <DialogContent sx={{ bgcolor: '#111827', color: '#9ca3af' }}>
-                    <Typography variant="body1">
-                        Check Any user is Currently assigned! If yes, the previous assignment will be closed.
-                        Are you sure you want to assign asset <b>{assetId}</b> to <b>{newAssignForm.employee_name} ({newAssignForm.employee_id})</b>?
-                    </Typography>
-                </DialogContent>
-                <DialogActions sx={{ bgcolor: '#111827', p: 2 }}>
-                    <Button onClick={() => setShowConfirmDialog(false)} sx={{ color: '#9ca3af' }}>Cancel</Button>
-                    <Button onClick={processAssignment} variant="contained" color="success" sx={{ fontWeight: 'bold' }}>
-                        Yes, Confirm
-                    </Button>
-                </DialogActions>
-            </Dialog>
+            <Dialog open={showRepairForm} onClose={() => setShowRepairForm(false)} maxWidth="xs" fullWidth>
+    <DialogTitle sx={{ bgcolor: '#111827', color: 'white', fontWeight: 'bold' }}>
+        Log New Repair
+    </DialogTitle>
+    <DialogContent sx={{ bgcolor: '#111827', pt: 2 }}>
+        <Typography variant="caption" sx={{ color: '#9ca3af', mb: 2, display: 'block' }}>
+            Current Holder: <b>{history.find(h => h.to_date === null)?.employee_name || 'N/A'}</b>
+        </Typography>
+        <div className="space-y-4 mt-2">
+            <TextField
+                fullWidth label="Issue Description" multiline rows={3} variant="outlined"
+                value={repairData.issue}
+                onChange={(e) => setRepairData({...repairData, issue: e.target.value})}
+                sx={{ '& .MuiOutlinedInput-root': { color: 'white', '& fieldset': { borderColor: '#374151' } }, '& .MuiInputLabel-root': { color: '#9ca3af' } }}
+            />
+            <TextField
+                fullWidth label="Repair Amount (₹)" type="number" variant="outlined"
+                value={repairData.amount}
+                onChange={(e) => setRepairData({...repairData, amount: e.target.value})}
+                sx={{ '& .MuiOutlinedInput-root': { color: 'white', '& fieldset': { borderColor: '#374151' } }, '& .MuiInputLabel-root': { color: '#9ca3af' } }}
+            />
+        </div>
+    </DialogContent>
+    <DialogActions sx={{ bgcolor: '#111827', p: 2 }}>
+        <Button onClick={() => setShowRepairForm(false)} sx={{ color: '#9ca3af' }}>Cancel</Button>
+        <Button 
+            onClick={handleRepairSubmit} 
+            variant="contained" 
+            color="warning" 
+            sx={{ fontWeight: 'bold' }}
+            disabled={!repairData.issue || !repairData.amount}
+        >
+            Save Repair Log
+        </Button>
+    </DialogActions>
+</Dialog>
         </div>
     );
 };

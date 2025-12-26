@@ -22,9 +22,9 @@ export const SnackbarProvider = ({ children }) => {
   return (
     <SnackbarContext.Provider value={showSnackbar}>
       {children}
-      <Snackbar 
-        open={state.open} 
-        autoHideDuration={4000} 
+      <Snackbar
+        open={state.open}
+        autoHideDuration={4000}
         onClose={handleClose}
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       >

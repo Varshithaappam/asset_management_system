@@ -9,20 +9,20 @@ const Login = ({ setAuthUser }) => {
   const showSnackbar = useSnackbar();
 
   const handleLoginSuccess = async (response) => {
-  try {
-    const res = await axios.post('http://localhost:5000/api/auth/google', {
-      token: response.credential,
-    }, { withCredentials: true });
+    try {
+      const res = await axios.post('http://localhost:5000/api/auth/google', {
+        token: response.credential,
+      }, { withCredentials: true });
 
-    if (res.data.user) {
-      showSnackbar("Successfully Logged In!", "success");
-      setAuthUser(res.data.user);
-      // window.location.href = "/"; 
+      if (res.data.user) {
+        showSnackbar("Successfully Logged In!", "success");
+        setAuthUser(res.data.user);
+        // window.location.href = "/"; 
+      }
+    } catch (err) {
+      showSnackbar(err.response?.data?.error || "User not authorized in system", "error");
     }
-  } catch (err) {
-    showSnackbar(err.response?.data?.error || "User not authorized in system", "error");
-  }
-};
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900 p-4">
@@ -32,7 +32,7 @@ const Login = ({ setAuthUser }) => {
             <ShieldCheck size={50} />
           </div>
         </div>
-        
+
         <h1 className="text-2xl font-bold text-white mb-2">Asset Management</h1>
         <p className="text-white mb-8 text-sm">
           Please sign in with your Google account.
@@ -42,7 +42,7 @@ const Login = ({ setAuthUser }) => {
           <GoogleLogin
             onSuccess={handleLoginSuccess}
             onError={() => console.log('Login Failed')}
-            useOneTap={false} 
+            useOneTap={false}
             itp_support={true}
           />
         </div>

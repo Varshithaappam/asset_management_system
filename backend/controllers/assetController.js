@@ -14,26 +14,31 @@ exports.getAllAssetTypes = async (req, res) => {
                  AND ah.to_date IS NULL) AS assigned_count,
                 (SELECT COUNT(*) 
                  FROM assets a 
-                 WHERE a.type_id = at.id) AS total_registered
+                 WHERE a.type_id = at.id) AS total_registered,
+                (SELECT COUNT(*) 
+                 FROM repair_history rh 
+                 WHERE rh.asset_id IN (SELECT a.asset_id FROM assets a WHERE a.type_id = at.id)) AS repair_count
             FROM asset_types at
             WHERE at.delete_stat = 0
             ORDER BY at.name ASC
         `;
-        
+
         const [rows] = await pool.query(query);
+
         const formattedRows = rows.map(row => {
             const assigned = row.assigned_count || 0;
-            const total = row.total_limit || 20; 
-            
+            const total = row.total_limit || 20;
+
             return {
                 id: row.id,
                 name: row.name,
                 total_limit: total,
                 assigned_count: assigned,
-                inventory_count: total - assigned 
+                inventory_count: total - assigned,
+                repair_count: row.repair_count || 0
             };
         });
-        //  console.log(rows);
+
         res.json(formattedRows);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -85,23 +90,23 @@ exports.getAssetDetailsByCategory = async (req, res) => {
 };
 
 exports.addAsset = async (req, res) => {
-    const { 
-        asset_id, type_id, brand, model, bought_on, 
-        ram, processor, screen_size, os, storage_capacity 
+    const {
+        asset_id, type_id, brand, model, bought_on,
+        ram, processor, screen_size, os, storage_capacity
     } = req.body;
-    
+
     try {
         const query = `
             INSERT INTO assets 
             (asset_id, type_id, brand, model, bought_on, ram, processor, screen_size, os, storage_capacity) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
-        
+
         const [result] = await pool.query(query, [
-            asset_id, type_id, brand, model, bought_on, 
+            asset_id, type_id, brand, model, bought_on,
             ram, processor, screen_size, os, storage_capacity
         ]);
-        
+
         res.status(201).json({ message: "Asset registered successfully" });
     } catch (err) {
         if (err.code === 'ER_DUP_ENTRY') {
@@ -114,7 +119,7 @@ exports.addAsset = async (req, res) => {
 exports.getAssetsByType = async (req, res) => {
     try {
         const [rows] = await pool.query(
-            'SELECT * FROM assets WHERE type_id = ? ORDER BY asset_id ASC', 
+            'SELECT * FROM assets WHERE type_id = ? ORDER BY asset_id ASC',
             [req.params.typeId]
         );
         res.json(rows);
@@ -127,11 +132,11 @@ exports.getAssetDetails = async (req, res) => {
     const { assetId } = req.params;
     try {
         const [rows] = await pool.query(
-            'SELECT asset_id, brand, model, ram, processor, os, storage_capacity, screen_size FROM assets WHERE asset_id = ?', 
+            'SELECT asset_id, brand, model, ram, processor, os, storage_capacity, screen_size FROM assets WHERE asset_id = ?',
             [assetId]
         );
         if (rows.length === 0) return res.status(404).json({ error: "Asset not found" });
-        res.json(rows[0]); 
+        res.json(rows[0]);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -152,12 +157,12 @@ exports.getAssetHistory = async (req, res) => {
              ORDER BY 
                 CASE WHEN to_date IS NULL THEN 0 ELSE 1 END, 
                 from_date DESC,                             
-                id DESC`,                                   
+                id DESC`,
             [req.params.assetId]
         );
         res.json(rows);
-    } catch (err) { 
-        res.status(500).json({ error: err.message }); 
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 };
 
@@ -183,12 +188,6 @@ exports.reassignAsset = async (req, res) => {
     } finally { connection.release(); }
 };
 // --------------------------------------
-
-
-
-
-
-
 
 exports.getAssetsByTypeName = async (req, res) => {
     const { typeName } = req.params;
@@ -217,10 +216,10 @@ exports.getAssetsByTypeName = async (req, res) => {
 
 
 exports.assignNewAsset = async (req, res) => {
-    const { 
-        asset_id, brand, model, typeName, 
-        ram, processor, screen_size, os, storage_capacity, 
-        employee_id, employee_name, from_date 
+    const {
+        asset_id, brand, model, typeName,
+        ram, processor, screen_size, os, storage_capacity,
+        employee_id, employee_name, from_date
     } = req.body;
 
     const connection = await pool.getConnection();
@@ -233,19 +232,19 @@ exports.assignNewAsset = async (req, res) => {
             INSERT INTO assets 
             (asset_id, type_id, brand, model, ram, processor, screen_size, os, storage_capacity) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-        
+
         await connection.query(assetQuery, [
-            asset_id, type_id, brand, model, 
-            ram || null, 
-            processor || null, 
-            screen_size || null, 
-            os || null, 
+            asset_id, type_id, brand, model,
+            ram || null,
+            processor || null,
+            screen_size || null,
+            os || null,
             storage_capacity || null
         ]);
         const historyQuery = `
             INSERT INTO assignment_history (asset_id, employee_id, employee_name, from_date, to_date) 
             VALUES (?, ?, ?, ?, NULL)`;
-            
+
         await connection.query(historyQuery, [asset_id, employee_id, employee_name, from_date]);
 
         await connection.commit();
@@ -260,26 +259,32 @@ exports.assignNewAsset = async (req, res) => {
 };
 
 // ----------------------------------------
-// backend/controllers/assetController.js
 
 exports.getAssetRepairs = async (req, res) => {
     const { assetId } = req.params;
     try {
         const query = `
-            SELECT id, 
-                   DATE_FORMAT(date_reported, '%Y-%m-%d') as date_reported, 
-                   issue_reported, 
-                   amount, 
-                   resolver_comments 
-            FROM repair_history 
-            WHERE asset_id = ? 
-            ORDER BY date_reported DESC`;
+            SELECT 
+                rh.id, 
+                DATE_FORMAT(rh.date_reported, '%d-%m-%Y') as date_reported, 
+                rh.issue_reported, 
+                rh.amount, 
+                rh.resolver_comments,
+                COALESCE(ah.employee_name, 'System/Unassigned') as employee_name
+            FROM repair_history rh
+            LEFT JOIN assignment_history ah ON rh.asset_id = ah.asset_id 
+                AND rh.date_reported BETWEEN ah.from_date AND COALESCE(ah.to_date, CURDATE())
+            WHERE rh.asset_id = ? 
+            ORDER BY rh.date_reported DESC`;
+
         const [rows] = await pool.query(query, [assetId]);
         res.json(rows);
     } catch (err) {
+        console.error("Fetch repairs error:", err.message);
         res.status(500).json({ error: err.message });
     }
 };
+
 
 // 2. Add Repair
 exports.addRepair = async (req, res) => {
@@ -310,12 +315,12 @@ exports.endAssignment = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
-
+//additional 
 exports.softDeleteAsset = async (req, res) => {
     const { typeName } = req.params;
     try {
         const [result] = await pool.query(
-            "UPDATE asset_types SET delete_stat = 1 WHERE name = ?", 
+            "UPDATE asset_types SET delete_stat = 1 WHERE name = ?",
             [typeName]
         );
         if (result.affectedRows === 0) {

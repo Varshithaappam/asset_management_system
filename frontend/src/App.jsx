@@ -13,9 +13,9 @@ import AssetDeepView from './pages/AssetDeepView';
 
 function App() {
   const [authUser, setAuthUser] = useState(() => {
-  const savedUser = localStorage.getItem('user');
-  return savedUser ? JSON.parse(savedUser) : null;
-});
+    const savedUser = localStorage.getItem('user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
   const [loading, setLoading] = useState(true);
   const location = useLocation();
 
@@ -23,20 +23,20 @@ function App() {
   const showSnackbar = useSnackbar();
 
   useEffect(() => {
-  const checkAuth = async () => {
-    try {
-      const res = await axios.get('http://localhost:5000/api/auth/me', { withCredentials: true });
-      if (res.data.user) {
-        setAuthUser(res.data.user);
+    const checkAuth = async () => {
+      try {
+        const res = await axios.get('http://localhost:5000/api/auth/me', { withCredentials: true });
+        if (res.data.user) {
+          setAuthUser(res.data.user);
+        }
+      } catch (err) {
+        setAuthUser(null);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      setAuthUser(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-  checkAuth();
-}, []);
+    };
+    checkAuth();
+  }, []);
 
   const handleLogout = () => {
     askConfirmation(
@@ -77,23 +77,21 @@ function App() {
       <nav className="bg-gray-800/50 shadow-lg shadow-gray-700 backdrop-blur-md border-b border-gray-700 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
         <div className="flex items-center gap-8">
           <div className="flex bg-gray-900/80 p-1 rounded-xl border border-gray-700">
-            <Link 
-              to="/" 
-              className={`px-6 py-2 rounded-lg font-medium transition-all ${
-                location.pathname === '/' || location.pathname.startsWith('/assets')
-                ? 'bg-white text-blue-600 shadow-lg' 
+            <Link
+              to="/"
+              className={`px-6 py-2 rounded-lg font-medium transition-all ${location.pathname === '/' || location.pathname.startsWith('/assets')
+                ? 'bg-white text-blue-600 shadow-lg'
                 : 'text-gray-400 hover:text-white'
-              }`}
+                }`}
             >
               Assets
             </Link>
-            <Link 
-              to="/users" 
-              className={`px-6 py-2 rounded-lg font-medium transition-all ${
-                location.pathname === '/users' 
-                ? 'bg-white text-blue-600 shadow-lg' 
+            <Link
+              to="/users"
+              className={`px-6 py-2 rounded-lg font-medium transition-all ${location.pathname === '/users'
+                ? 'bg-white text-blue-600 shadow-lg'
                 : 'text-gray-400 hover:text-white'
-              }`}
+                }`}
             >
               User Management
             </Link>
@@ -104,8 +102,8 @@ function App() {
           <span className="text-sm text-gray-300 hidden sm:block">
             Welcome, <span className="font-bold text-white">{authUser.name}</span>
           </span>
-          <button 
-            onClick={handleLogout} 
+          <button
+            onClick={handleLogout}
             className="text-gray-300 font-medium bg-gray-700/50 hover:bg-red-600 hover:text-white px-5 py-2 rounded-lg transition-all border border-gray-600 hover:border-red-500"
           >
             Logout

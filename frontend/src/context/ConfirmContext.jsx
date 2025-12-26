@@ -13,11 +13,11 @@ export const ConfirmProvider = ({ children }) => {
   const handleClose = () => setState({ ...state, open: false });
 
   const handleConfirm = async () => {
-  if (state.onConfirm) {
-    await state.onConfirm(); 
-  }
-  handleClose(); 
-};
+    if (state.onConfirm) {
+      await state.onConfirm();
+    }
+    handleClose();
+  };
 
   return (
     <ConfirmContext.Provider value={askConfirmation}>
