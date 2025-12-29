@@ -29,9 +29,9 @@ const Login = ({ setAuthUser }) => {
     <div className={`min-h-screen flex items-center justify-center bg-orange-50 p-4`}>
       <div className={`max-w-md w-full bg-orange-500 hover:bg-orange-600  rounded-3xl ${theme.cardShadowHover} p-10 text-center border-2 border-orange-50 transition-all duration-300`}>
         <div className="flex justify-center mb-6">
-          <div className="bg-white p-2 rounded shadow-sm flex items-center justify-center overflow-hidden">
+          <div className="bg-white p-0.5 rounded shadow-sm flex items-center justify-center overflow-hidden">
                         <img
-                          src="https://gradiouslmsapp.s3.ap-south-1.amazonaws.com/EmailImages/logo.png"
+                          src={mylogo}
                           alt="Logo"
                           className="h-12 w-auto object-contain"
                         />

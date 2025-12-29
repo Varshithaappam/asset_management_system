@@ -139,25 +139,25 @@ const AssetDeepView = () => {
         <ThemeProvider theme={orangeMuiTheme}>
             <div className={`min-h-screen ${theme.pageBg} ${theme.mainText} p-8 font-sans`}>
                 <div className="max-w-7xl mx-auto">
-                    <button onClick={() => navigate(-1)} className={`flex items-center gap-2 ${theme.iconText} hover:opacity-80 mb-8 transition-all group font-bold`}>
+                    <button onClick={() => navigate(-1)} className={`flex items-center gap-2 text-black hover:opacity-80 mb-8 transition-all group font-bold`}>
                         <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" /> Back to History
                     </button>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        <div className="lg:col-span-2 space-y-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        <div className="lg:col-span-2 space-y-6">
                             <div className={`bg-white border-2 ${theme.cardBorder} rounded-3xl p-8 shadow-xl`}>
-                                <h2 className={`text-2xl font-black mb-8 flex items-center gap-3 ${theme.iconText} uppercase tracking-tight`}>
+                                <h2 className={`text-2xl font-semibold mb-4 flex items-center gap-2 ${theme.iconText} uppercase tracking-tight`}>
                                     <ShieldCheck /> Device Information
                                 </h2>
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-y-8 gap-x-4 mb-10">
-                                    <div><p className={`${theme.mutedText} text-[10px] uppercase font-bold mb-1`}>Asset ID</p><p className="text-xl font-bold">{details?.asset_id}</p></div>
-                                    <div><p className={`${theme.mutedText} text-[10px] uppercase font-bold mb-1`}>Brand</p><p className="text-xl font-bold">{details?.brand}</p></div>
-                                    <div><p className={`${theme.mutedText} text-[10px] uppercase font-bold mb-1`}>Model</p><p className="text-xl font-bold">{details?.model}</p></div>
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-y-8 gap-x-4 mb-2">
+                                    <div><p className={`${theme.mutedText} text-[10px] uppercase font-bold mb-1`}>Asset ID</p><p className="text-xl font-semibold">{details?.asset_id}</p></div>
+                                    <div><p className={`${theme.mutedText} text-[10px] uppercase font-bold mb-1`}>Brand</p><p className="text-xl font-semibold">{details?.brand}</p></div>
+                                    <div><p className={`${theme.mutedText} text-[10px] uppercase font-bold mb-1`}>Model</p><p className="text-xl font-semibold">{details?.model}</p></div>
                                 </div>
 
                                 {details?.asset_id?.startsWith('LPT') && (
                                     <div className={`border-t ${theme.tableRowBorder} pt-8`}>
-                                        <h2 className="text-2xl font-black mb-8 flex items-center gap-3 text-purple-600 uppercase tracking-tight">
+                                        <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2 text-purple-600 uppercase tracking-tight">
                                             <Cpu /> Configuration
                                         </h2>
                                         <div className="grid grid-cols-2 md:grid-cols-3 gap-y-8 gap-x-4">
@@ -174,18 +174,18 @@ const AssetDeepView = () => {
                             {isAssignmentActive ? (
                                 <>
                                     {!isUpdating ? (
-                                        <div className={`bg-orange-50 border-2 ${theme.cardBorder} p-8 rounded-3xl shadow-lg`}>
-                                            <h3 className={`text-xl font-bold mb-4 ${theme.iconText} uppercase tracking-tighter flex items-center gap-2`}>
-                                                <History size={20} /> Reassignment Flow
+                                        <div className={`bg-orange-50 border-2 ${theme.cardBorder} p-4 rounded-3xl shadow-lg`}>
+                                            <h3 className={`text-xl font-semibold mb-4 ${theme.iconText} uppercase tracking-tighter flex items-center gap-2`}>
+                                                <History size={15} /> Reassignment Flow
                                             </h3>
-                                            <p className={`${theme.mutedText} text-sm mb-6 font-medium`}>Asset is currently with <b className={theme.mainText}>{empId}</b>.</p>
-                                            <button onClick={() => setIsUpdating(true)} className={`w-full ${theme.btnPrimary} py-4 rounded-2xl font-black text-sm uppercase transition-all`}>
+                                            <p className={`${theme.mutedText} text-sm mb-3 font-medium`}>Asset is currently with <b className={theme.mainText}>{empId}</b>.</p>
+                                            <button onClick={() => setIsUpdating(true)} className={`w-full ${theme.btnPrimary} py-4 rounded-2xl font-semibold text-sm uppercase transition-all`}>
                                                 Update Assignment
                                             </button>
                                         </div>
                                     ) : (
-                                        <div className={`bg-white border-2 ${theme.cardBorderHover} p-8 rounded-3xl shadow-2xl`}>
-                                            <h3 className={`text-xl font-black ${theme.iconText} mb-6 uppercase`}>New Assignment</h3>
+                                        <div className={`bg-white border-2 ${theme.cardBorderHover} p-4 rounded-3xl shadow-2xl`}>
+                                            <h3 className={`text-xl font-semibold ${theme.iconText} mb-3 uppercase`}>New Assignment</h3>
                                             <form onSubmit={handleReassignSubmit} className="space-y-4">
                                                 <input required placeholder="New Employee ID" className={`w-full bg-gray-50 border-2 ${theme.cardBorder} rounded-xl p-3 text-sm focus:${theme.cardBorderHover} outline-none transition-all`} value={reassignForm.new_employee_id} onChange={(e) => setReassignForm({ ...reassignForm, new_employee_id: e.target.value })} />
                                                 <input required placeholder="New Employee Name" className={`w-full bg-gray-50 border-2 ${theme.cardBorder} rounded-xl p-3 text-sm focus:${theme.cardBorderHover} outline-none transition-all`} value={reassignForm.new_employee_name} onChange={(e) => setReassignForm({ ...reassignForm, new_employee_name: e.target.value })} />
@@ -196,11 +196,11 @@ const AssetDeepView = () => {
                                         </div>
                                     )}
                                     {!isUpdating && (
-                                        <div className="bg-red-50 border-2 border-red-100 p-6 rounded-3xl shadow-lg">
-                                            <h3 className="text-lg font-black mb-4 text-red-600 uppercase flex items-center gap-3">
-                                                <UserMinus size={20} /> End Assignment
+                                        <div className="bg-red-50 border-2 border-red-100 p-3 rounded-3xl shadow-lg">
+                                            <h3 className="text-lg font-semibold mb-2 text-red-600 uppercase flex items-center gap-3">
+                                                <UserMinus size={15} /> End Assignment
                                             </h3>
-                                            <button onClick={() => setShowEndAssignment(true)} className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-black uppercase text-sm transition-all shadow-md shadow-red-100">
+                                            <button onClick={() => setShowEndAssignment(true)} className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-semibold uppercase text-sm transition-all shadow-md shadow-red-100">
                                                 End User Assignment
                                             </button>
                                         </div>
@@ -219,8 +219,6 @@ const AssetDeepView = () => {
                         </div>
                     </div>
                 </div>
-
-                {/* Dialogs using ThemeProvider for consistent orange accents */}
                 <Dialog open={showEndAssignment} onClose={() => setShowEndAssignment(false)} fullWidth maxWidth="xs" PaperProps={{ sx: { borderRadius: '24px' } }}>
                     <DialogTitle sx={{ fontWeight: '900', textTransform: 'uppercase', tracking: 'tight' }}>End User Assignment</DialogTitle>
                     <DialogContent sx={{ pt: 2 }}>

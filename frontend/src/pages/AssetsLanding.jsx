@@ -47,19 +47,19 @@ const AssetsLanding = () => {
   };
 
   return (
-    <div className={`min-h-screen ${theme.pageBg} ${theme.mainText} p-8`}>
+    <div className={`min-h-screen ${theme.pageBg} ${theme.mainText} p-7`}>
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-10">
+        <div className="flex justify-between items-center mb-5">
           <div>
-            <h1 className="text-3xl font-black uppercase tracking-tight">Asset Inventory</h1>
+            <h1 className="text-2xl font-semibold uppercase tracking-tight">Asset Inventory</h1>
             <p className={`${theme.mutedText} mt-1`}>Select to view and add details</p>
           </div>
           
           <button 
             onClick={() => setShowAddModal(true)}
-            className={`${theme.btnPrimary} px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-all`}
+            className={`${theme.btnPrimary} px-3 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-all`}
           >
-            <Plus size={20} /> Add Asset Type
+            <Plus size={18} /> Add Asset Type
           </button>
         </div>
 
@@ -68,16 +68,16 @@ const AssetsLanding = () => {
             <div 
               key={type.id} 
               onClick={() => navigate(`/assets/${type.name}`)} 
-              className={`group ${theme.cardBg} p-6 rounded-2xl border-2 ${theme.cardBorder} hover:${theme.tableRowHover} hover:${theme.cardBorderHover} transition-all cursor-pointer ${theme.cardShadow} hover:${theme.cardShadowHover}`}
+              className={`group ${theme.cardBg} p-4 rounded-2xl border-2 ${theme.cardBorder} hover:${theme.tableRowHover} hover:${theme.cardBorderHover} transition-all cursor-pointer ${theme.cardShadow} hover:${theme.cardShadowHover}`}
             >
               <div className="flex flex-col items-center text-center mb-4">
                 {/* <div className={`${theme.iconText} mb-4 p-4 ${theme.iconBg} rounded-2xl group-hover:scale-110 transition-transform`}>
                   {iconMap[type.name] || iconMap.Default}
                 </div> */}
-                <h3 className={`font-black text-xl uppercase tracking-tight ${theme.mainText}`}>{type.name}</h3>
+                <h3 className={`font-semibold text-lg uppercase tracking-tight ${theme.mainText}`}>{type.name}</h3>
               </div>
 
-              <div className={`space-y-2 mt-4 pt-4 border-t ${theme.tableRowBorder}`}>
+              <div className={`space-y-2 mt-4 pt-2 border-t ${theme.tableRowBorder}`}>
                 <div className="flex justify-between items-center text-sm font-medium">
                   <span className={`${theme.mutedText} uppercase text-[10px] font-bold`}>Total Capacity</span>
                   <span className={`font-mono font-bold ${theme.statusCapacity}`}>{type.total_limit}</span>

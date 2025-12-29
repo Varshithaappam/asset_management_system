@@ -11,7 +11,7 @@ import AssetDetails from './pages/AssetDetails';
 import AssetHistory from './pages/AssetHistory';
 import AssetDeepView from './pages/AssetDeepView';
 import { theme } from './theme';
-import mylogo from './assets/logo1.jpeg';
+import mylogo from './assets/glogo.jpeg';
 function App() {
   const [authUser, setAuthUser] = useState(() => {
     const savedUser = localStorage.getItem('user');
@@ -75,18 +75,18 @@ function App() {
 
   return (
     <div className={`min-h-screen ${theme.pageBg} flex flex-col`}>
-      <nav className={`${theme.navBg} ${theme.cardShadow} border-b ${theme.navBorder} px-6 py-4  flex items-center justify-between sticky top-0 z-50`}>
+      <nav className={`bg-white ${theme.cardShadow} border-b  px-6 py-4  flex items-center justify-between sticky top-0 z-50`}>
         <div className="flex items-center gap-8">
-          <div className="flex items-center gap-3 border-r border-orange-500/50">
-            <div className="bg-white p-0.5 rounded shadow-sm flex items-center justify-center overflow-hidden">
+          <div className="flex items-center gap-3">
+            <div >
               <img
               src={mylogo}
                 alt="Logo"
-                className="h-12 w-12 object-contain"
+                className="h-12 w-auto object-contain"
               />
             </div>
           </div>
-          <div className={`flex bg-orange-700/40 p-1 rounded-xl border ${theme.navBorder}`}>
+          <div className={`flex bg-orange-600 p-1 rounded-xl border ${theme.navBorder}`}>
             <Link
               to="/"
               className={`px-6 py-2 rounded-lg font-bold transition-all ${location.pathname === '/' || location.pathname.startsWith('/assets')
@@ -109,12 +109,12 @@ function App() {
         </div>
 
         <div className="flex items-center gap-6">
-          <span className={`text-sm ${theme.navText} hidden sm:block opacity-90`}>
-            Welcome, <span className="font-bold text-white">{authUser.name}</span>
+          <span className={`text-sm text-black hidden sm:block opacity-90`}>
+            Welcome, <span className="font-bold text-black">{authUser.name}</span>
           </span>
           <button
             onClick={handleLogout}
-            className={`${theme.navText} font-bold bg-orange-700/50 hover:bg-white hover:text-orange-600 px-5 py-2 rounded-lg transition-all border ${theme.navBorder} shadow-sm`}
+            className={`${theme.navText} font-bold bg-orange-600 hover:bg-orange-700 px-3 py-2 rounded-lg transition-all border ${theme.navBorder} shadow-sm`}
           >
             Logout
           </button>

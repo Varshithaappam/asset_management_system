@@ -124,62 +124,62 @@ const AssetHistory = () => {
 
     return (
         <ThemeProvider theme={orangeMuiTheme}>
-            <div className={`min-h-screen ${theme.pageBg} ${theme.mainText} pt-10 p-8`}>
+            <div className={`min-h-screen ${theme.pageBg} ${theme.mainText} pt-5 p-4`}>
                 <div className="max-w-6xl mx-auto">
-                    <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-4">
                             <button onClick={() => navigate(-1)} className={`p-2 hover:${theme.iconBg} rounded-full ${theme.iconText} transition`}>
-                                <ArrowLeft size={28} />
+                                <ArrowLeft size={25} />
                             </button>
-                            <h1 className="text-3xl font-black uppercase tracking-tight">Asset History</h1>
+                            <h1 className="text-2xl font-semibold uppercase tracking-tight">Asset History</h1>
                         </div>
                     </div>
 
-                    <div className={`bg-white border-2 ${theme.cardBorder} rounded-2xl p-8 mb-8 ${theme.cardShadowHover} relative overflow-hidden`}>
+                    <div className={`bg-white border-2 ${theme.cardBorder} rounded-2xl p-8 mb-4 ${theme.cardShadowHover} relative overflow-hidden`}>
                         <div className="relative z-10">
                             <div className="flex justify-between items-start mb-6">
                                 <div>
                                     <p className={`${theme.iconText} font-mono text-sm uppercase tracking-widest mb-1 font-bold`}>Asset ID</p>
-                                    <h2 className="text-5xl font-black">{assetId}</h2>
+                                    <h2 className="text-2xl font-semibold">{assetId}</h2>
                                 </div>
                                 <div className="text-right">
                                     <p className={`${theme.mutedText} text-sm mb-1 uppercase font-bold tracking-tighter`}>Current Device</p>
-                                    <h3 className={`text-2xl font-bold ${theme.mainText}`}>{details?.brand} {details?.model}</h3>
+                                    <h3 className={`text-xl font-semibold ${theme.mainText}`}>{details?.brand} {details?.model}</h3>
                                 </div>
                             </div>
 
                             {details?.ram && (
                                 <div className={`grid grid-cols-2 md:grid-cols-5 gap-6 mt-6 pt-6 border-t ${theme.tableRowBorder}`}>
                                     <div className="flex items-center gap-3">
-                                        <Cpu className={theme.iconText} size={20} />
+                                        <Cpu className={theme.iconText} size={15} />
                                         <div>
                                             <p className={`text-[10px] ${theme.mutedText} uppercase font-bold`}>Processor</p>
                                             <p className={`text-sm font-semibold ${theme.mainText}`}>{details.processor || '-'}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <Layers className="text-purple-600" size={20} />
+                                        <Layers className="text-purple-600" size={15} />
                                         <div>
                                             <p className={`text-[10px] ${theme.mutedText} uppercase font-bold`}>Memory</p>
                                             <p className={`text-sm font-semibold ${theme.mainText}`}>{details.ram || '-'}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <span className="text-orange-500 text-lg">💾</span>
+                                        <span className="text-orange-500 text-sm">💾</span>
                                         <div>
                                             <p className={`text-[10px] ${theme.mutedText} uppercase font-bold`}>Storage</p>
                                             <p className={`text-sm font-semibold ${theme.mainText}`}>{details.storage_capacity || '-'}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <Monitor className="text-green-600" size={20} />
+                                        <Monitor className="text-green-600" size={15} />
                                         <div>
                                             <p className={`text-[10px] ${theme.mutedText} uppercase font-bold`}>Display</p>
                                             <p className={`text-sm font-semibold ${theme.mainText}`}>{details.screen_size || '-'}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <span className="text-yellow-600 text-lg">⚙️</span>
+                                        <span className="text-yellow-600 text-sm">⚙️</span>
                                         <div>
                                             <p className={`text-[10px] ${theme.mutedText} uppercase font-bold`}>OS</p>
                                             <p className={`text-sm font-semibold ${theme.mainText}`}>{details.os || '-'}</p>
@@ -194,9 +194,9 @@ const AssetHistory = () => {
                         <div className="mb-6 flex justify-end">
                             <button
                                 onClick={() => setIsAssigning(true)}
-                                className={`${theme.btnPrimary} px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-orange-100`}
+                                className={`${theme.btnPrimary} px-3 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-orange-100`}
                             >
-                                <UserPlus size={20} /> Assign Asset to New Employee
+                                <UserPlus size={15} /> Assign Asset to New Employee
                             </button>
                         </div>
                     )}
@@ -232,7 +232,7 @@ const AssetHistory = () => {
                             <div className="flex items-center gap-4">
                                 <div className="flex items-center gap-2">
                                     <History size={20} className={theme.iconText} />
-                                    <span className={`font-black uppercase tracking-tight ${theme.mainText}`}>
+                                    <span className={`font-semibold uppercase tracking-tight ${theme.mainText}`}>
                                         {viewMode === 'assignment' ? 'Assignment History' : 'Repair History'}
                                     </span>
                                 </div>
@@ -266,7 +266,7 @@ const AssetHistory = () => {
                                                 onClick={() => navigate(`/assets/deep-view/${assetId}/${entry.employee_id}`)}
                                                 className={`${theme.tableRowHover} cursor-pointer transition-all`}
                                             >
-                                                <td className={`px-6 py-4 font-bold ${theme.mainText}`}>{entry.employee_name}</td>
+                                                <td className={`px-6 py-4 font-semibold ${theme.mainText}`}>{entry.employee_name}</td>
                                                 <td className={`px-6 py-4 ${theme.mutedText} font-mono text-sm`}>{entry.employee_id}</td>
                                                 <td className={`px-6 py-4 ${theme.mainText} opacity-70`}>{entry.from_date}</td>
                                                 <td className={`px-6 py-4 ${theme.mainText} opacity-70`}>
@@ -290,9 +290,9 @@ const AssetHistory = () => {
                                     <tbody className={`divide-y ${theme.tableRowBorder}`}>
                                         {repairs.length > 0 ? repairs.map((repair, index) => (
                                             <tr key={index} className={`${theme.tableRowHover} transition-all`}>
-                                                <td className={`px-6 py-4 font-bold ${theme.mainText}`}>{repair.employee_name}</td>
+                                                <td className={`px-6 py-4 font-semibold ${theme.mainText}`}>{repair.employee_name}</td>
                                                 <td className={`px-6 py-4 ${theme.mainText} opacity-80`}>{repair.issue_reported}</td>
-                                                <td className={`px-6 py-4 font-black ${theme.statusRepairs}`}>₹{repair.amount}</td>
+                                                <td className={`px-6 py-4 font-semibold ${theme.statusRepairs}`}>₹{repair.amount}</td>
                                                 <td className={`px-6 py-4 ${theme.mutedText} font-mono text-sm`}>{repair.date_reported}</td>
                                             </tr>
                                         )) : (

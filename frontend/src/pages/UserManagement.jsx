@@ -51,10 +51,10 @@ const UserManagement = () => {
   };
 
   return (
-    <div className={`min-h-screen ${theme.pageBg} ${theme.mainText} p-8`}>
+    <div className={`min-h-screen ${theme.pageBg} ${theme.mainText} p-5`}>
       <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-3xl font-black uppercase tracking-tight">User Management</h2>
+        <div className="flex justify-between items-center mb-5">
+          <h2 className="text-2xl font-semibold uppercase tracking-tight">User Management</h2>
           <button
             onClick={() => { setIsEditing(false); setFormData({ name: '', email: '' }); setShowModal(true); }}
             className={`${theme.btnPrimary} px-5 py-2.5 rounded-xl flex items-center gap-2 transition shadow-lg`}
@@ -78,7 +78,7 @@ const UserManagement = () => {
                 <tr key={user.id} className={`${theme.tableRowHover} transition`}>
                   <td className={`px-6 py-4 text-center ${theme.mutedText} font-medium`}>{index + 1}</td>
                   <td
-                    className={`px-6 py-4 font-black cursor-pointer ${theme.statusAssigned} hover:${theme.statusRepairs} transition-all`}
+                    className={`px-6 py-4 font-semibold cursor-pointer ${theme.statusAssigned} hover:text-black transition-all`}
                     onClick={() => {
                       setIsEditing(true);
                       setSelectedUser(user);

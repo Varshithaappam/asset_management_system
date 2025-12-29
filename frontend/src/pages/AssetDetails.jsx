@@ -115,20 +115,20 @@ const AssetDetails = () => {
                                 onClick={() => navigate('/')}
                                 className={`p-2 hover:${theme.iconBg} rounded-full ${theme.iconText} transition`}
                             >
-                                <ArrowLeft size={28} />
+                                <ArrowLeft size={24} />
                             </button>
-                            <h1 className="text-3xl font-black uppercase tracking-tight">{typeName} Inventory</h1>
+                            <h1 className="text-2xl font-semibold uppercase tracking-tight">{typeName} Inventory</h1>
                         </div>
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={() => setShowAssignModal(true)}
-                                className={`${theme.btnPrimary} px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-all`}
+                                className={`${theme.btnPrimary} px-3 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-all`}
                             >
                                 <Plus size={20} /> Assign New {typeName}
                             </button>
                             <button
                                 onClick={handleDeleteType}
-                                className={`${theme.btnSecondary} border-red-100 text-red-600 hover:bg-red-50 px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all`}
+                                className={`${theme.btnSecondary} border-red-100 text-red-600 hover:bg-red-50 px-3 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all`}
                             >
                                 <Trash2 size={16} /> Delete {typeName}
                             </button>
@@ -137,7 +137,7 @@ const AssetDetails = () => {
 
                     <div className={`${theme.cardBg} rounded-3xl ${theme.cardShadowHover} overflow-hidden border ${theme.cardBorder}`}>
                         <table className="w-full text-left">
-                            <thead className={`${theme.tableHeaderBg} border-b ${theme.cardBorder} text-xs font-bold uppercase ${theme.tableHeaderText}`}>
+                            <thead className={`${theme.tableHeaderBg} border-b ${theme.cardBorder} text-xs font-semibold uppercase ${theme.tableHeaderText}`}>
                                 <tr>
                                     <th className="px-6 py-4">Asset ID</th>
                                     <th className="px-6 py-4">Brand & Model</th>
@@ -158,37 +158,37 @@ const AssetDetails = () => {
                                         <td className="px-6 py-4">
                                             <button
                                                 onClick={() => navigate(`/assets/history/${asset.asset_id}`)}
-                                                className={`font-black ${theme.statusAssigned} hover:${theme.statusRepairs} transition-all text-left`}
+                                                className={`font-semibold ${theme.statusAssigned} hover:text-black transition-all text-left`}
                                             >
                                                 {asset.asset_id}
                                             </button>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className={`font-bold ${theme.mainText}`}>{asset.brand}</div>
+                                            <div className={`font-normal ${theme.mainText}`}>{asset.brand}</div>
                                             <div className={`text-xs ${theme.mutedText} font-medium`}>{asset.model}</div>
                                         </td>
 
                                         {typeName === 'Laptop' && (
                                             <>
                                                 <td className="px-6 py-4 text-sm">
-                                                    <div className={`${theme.mainText} font-semibold opacity-80`}>{asset.processor || '-'}</div>
+                                                    <div className={`${theme.mainText} font-normal opacity-80`}>{asset.processor || '-'}</div>
                                                     <div className={`text-xs ${theme.mutedText}`}>{asset.ram ? `${asset.ram} RAM` : '-'}</div>
                                                 </td>
                                                 <td className="px-6 py-4 text-sm">
-                                                    <div className={`${theme.mainText} font-semibold opacity-80`}>{asset.storage_capacity || '-'}</div>
+                                                    <div className={`${theme.mainText} font-normal opacity-80`}>{asset.storage_capacity || '-'}</div>
                                                     <div className={`text-xs ${theme.mutedText}`}>{asset.os || '-'}</div>
                                                 </td>
-                                                <td className={`px-6 py-4 text-sm ${theme.mainText} font-medium opacity-80`}>
+                                                <td className={`px-6 py-4 text-sm ${theme.mainText} font-normal opacity-80`}>
                                                     {asset.screen_size || '-'}
                                                 </td>
                                             </>
                                         )}
 
                                         <td className="px-6 py-4">
-                                            <div className={`text-sm font-bold ${theme.mainText}`}>{asset.employee_name}</div>
+                                            <div className={`text-sm font-normal ${theme.mainText}`}>{asset.employee_name}</div>
                                             <div className={`text-xs ${theme.mutedText} font-mono`}>{asset.employee_id}</div>
                                         </td>
-                                        <td className={`px-6 py-4 text-center ${theme.mutedText} font-bold text-xs uppercase`}>{asset.assign_date}</td>
+                                        <td className={`px-6 py-4 text-center ${theme.mutedText} font-normal text-xs uppercase`}>{asset.assign_date}</td>
                                     </tr>
                                 ))}
                             </tbody>
