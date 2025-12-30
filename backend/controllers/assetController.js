@@ -105,28 +105,29 @@ exports.getAssetsByStatus = async (req, res) => {
 
 exports.solveRepair = async (req, res) => {
     const { asset_id } = req.params;
+    const { main_issue, cost, solved_date } = req.body;
     const connection = await pool.getConnection();
 
     try {
         await connection.beginTransaction();
-        const updateAssetQuery = "UPDATE assets SET status = 'Inventory' WHERE asset_id = ?";
-        await connection.query(updateAssetQuery, [asset_id]);
+        await connection.query("UPDATE assets SET status = 'Inventory' WHERE asset_id = ?", [asset_id]);
+        
         const updateHistoryQuery = `
             UPDATE repair_history 
-            SET status = 'Fixed' 
+            SET status = 'Fixed', 
+                issue_reported = ?, 
+                amount = ?, 
+                date_resolved = ? 
             WHERE asset_id = ? AND status = 'Pending'
         `;
-        await connection.query(updateHistoryQuery, [asset_id]);
+        await connection.query(updateHistoryQuery, [main_issue, cost, solved_date, asset_id]);
         
         await connection.commit();
-        res.status(200).json({ message: "Asset is now fixed and available in Inventory" });
+        res.status(200).json({ message: "Repair records updated successfully" });
     } catch (err) {
         await connection.rollback();
-        console.error("Solve Repair Error:", err);
-        res.status(500).json({ error: "Server failed to process the repair resolution" });
-    } finally {
-        connection.release();
-    }
+        res.status(500).json({ error: "Failed to save resolution details" });
+    } finally { connection.release(); }
 };
 // 2. Assign an existing asset from Inventory
 exports.assignExistingAsset = async (req, res) => {
@@ -154,57 +155,26 @@ exports.assignExistingAsset = async (req, res) => {
 };
 
 exports.moveToRepair = async (req, res) => {
-    const { asset_id, issue, cost, date } = req.body;
-    const connection = await pool.getConnection();
-    try {
-        await connection.beginTransaction();
-
-        // 1. Update Asset Status
-        await connection.query(
-            "UPDATE assets SET status = 'Repairs' WHERE asset_id = ?",
-            [asset_id]
-        );
-
-        // 2. Insert into Repair History
-        await connection.query(
-            "INSERT INTO repair_history (asset_id, issue_reported, repair_cost, repair_date) VALUES (?, ?, ?, ?)",
-            [asset_id, issue, cost, date]
-        );
-
-        await connection.commit();
-        res.json({ message: "Asset moved to Repairs successfully" });
-    } catch (err) {
-        await connection.rollback();
-        res.status(500).json({ error: err.message });
-    } finally {
-        connection.release();
-    }
-};
-
-// backend/controllers/assetController.js
-
-exports.moveToRepair = async (req, res) => {
-    const { asset_id, issue, cost, date } = req.body;
+    const { asset_id, issue, date } = req.body;
     const connection = await pool.getConnection();
 
     try {
         await connection.beginTransaction();
-
-        // 1. Update the asset status in the assets table
-        const updateQuery = "UPDATE assets SET status = 'Repairs' WHERE asset_id = ?";
-        await connection.query(updateQuery, [asset_id]);
-
-        // 2. Insert the repair details into repair_history table
-        // Note: Ensure your table has columns: asset_id, issue_reported, amount, date_reported
-        const historyQuery = `
-            INSERT INTO repair_history 
-            (asset_id, issue_reported, amount, date_reported) 
-            VALUES (?, ?, ?, ?)
+        const closeAssignmentQuery = `
+            UPDATE assignment_history 
+            SET to_date = ?, remarks = 'Moved to Repair' 
+            WHERE asset_id = ? AND to_date IS NULL
         `;
-        await connection.query(historyQuery, [asset_id, issue, cost || 0, date]);
+        await connection.query(closeAssignmentQuery, [date, asset_id]);
+        await connection.query("UPDATE assets SET status = 'Repairs' WHERE asset_id = ?", [asset_id]);
+        const historyQuery = `
+            INSERT INTO repair_history (asset_id, issue_reported, date_reported, status) 
+            VALUES (?, ?, ?, 'Pending')
+        `;
+        await connection.query(historyQuery, [asset_id, issue, date]);
 
         await connection.commit();
-        res.status(200).json({ message: "Asset successfully moved to repairs" });
+        res.status(200).json({ message: "Asset moved to repairs and assignment ended." });
     } catch (err) {
         await connection.rollback();
         console.error("Repair Error:", err);
@@ -214,7 +184,37 @@ exports.moveToRepair = async (req, res) => {
     }
 };
 
-// backend/controllers/assetController.js
+exports.moveToRepair = async (req, res) => {
+    const { asset_id, issue, date } = req.body;
+    const connection = await pool.getConnection();
+
+    try {
+        await connection.beginTransaction();
+        const closeAssignmentQuery = `
+            UPDATE assignment_history 
+            SET to_date = ?, remarks = 'Moved to Repair' 
+            WHERE asset_id = ? AND to_date IS NULL
+        `;
+        await connection.query(closeAssignmentQuery, [date, asset_id]);
+        const updateAssetQuery = "UPDATE assets SET status = 'Repairs' WHERE asset_id = ?";
+        await connection.query(updateAssetQuery, [asset_id]);
+        const historyQuery = `
+            INSERT INTO repair_history 
+            (asset_id, issue_reported, date_reported, status) 
+            VALUES (?, ?, ?, 'Pending')
+        `;
+        await connection.query(historyQuery, [asset_id, issue, date]);
+
+        await connection.commit();
+        res.status(200).json({ message: "Asset moved to repairs and current assignment ended." });
+    } catch (err) {
+        await connection.rollback();
+        console.error("Repair Error:", err);
+        res.status(500).json({ error: "Failed to process repair request" });
+    } finally {
+        connection.release();
+    }
+};
 
 exports.unassignAsset = async (req, res) => {
     const { asset_id } = req.params;
@@ -223,26 +223,22 @@ exports.unassignAsset = async (req, res) => {
 
     try {
         await connection.beginTransaction();
-
-        // 1. Update assignment_history to set the 'to_date' (End the assignment)
-        await connection.query(
-            "UPDATE assignment_history SET to_date = CURDATE(), remarks = ? WHERE asset_id = ? AND to_date IS NULL",
-            [remarks || 'Returned', asset_id]
-        );
-
-        // 2. IMPORTANT: Update the ASSETS table status back to 'Inventory'
-        // This is what makes it move from the Assigned tab to the Inventory tab
-        await connection.query(
-            "UPDATE assets SET status = 'Inventory' WHERE asset_id = ?",
-            [asset_id]
-        );
+        const closeHistoryQuery = `
+            UPDATE assignment_history 
+            SET to_date = CURDATE(), 
+                remarks = ? 
+            WHERE asset_id = ? AND to_date IS NULL
+        `;
+        await connection.query(closeHistoryQuery, [remarks || 'Returned to Inventory', asset_id]);
+        const updateAssetQuery = "UPDATE assets SET status = 'Inventory' WHERE asset_id = ?";
+        await connection.query(updateAssetQuery, [asset_id]);
 
         await connection.commit();
-        res.status(200).json({ message: "Assignment closed and asset returned to Inventory" });
+        res.status(200).json({ message: "Assignment ended and asset returned to Inventory" });
     } catch (err) {
         await connection.rollback();
-        console.error(err);
-        res.status(500).json({ error: "Failed to process return" });
+        console.error("Unassign Error:", err);
+        res.status(500).json({ error: "Failed to process asset return" });
     } finally {
         connection.release();
     }
@@ -381,16 +377,13 @@ exports.addAsset = async (req, res) => {
     } = req.body;
 
     try {
-        // 1. DYNAMIC LOOKUP: Find the ID for WHATEVER typeName is sent (Laptop, CPU, Mouse, etc.)
         const [typeRows] = await pool.query('SELECT id FROM asset_types WHERE name = ?', [typeName]);
         
         if (typeRows.length === 0) {
             return res.status(400).json({ error: `The category '${typeName}' does not exist. Please create the category first.` });
         }
         
-        const type_id = typeRows[0].id; // This gets the correct ID automatically
-
-        // 2. INSERT: Now insert the asset with the correct type_id
+        const type_id = typeRows[0].id; 
         const query = `
             INSERT INTO assets 
             (asset_id, type_id, brand, model, bought_on, ram, processor, screen_size, os, storage_capacity, status) 
@@ -512,9 +505,6 @@ exports.getAssetsByTypeName = async (req, res) => {
     }
 };
 
-// 2. Updated getAssetDetailsByCategory (Cleaned and Fixed)
-
-
 exports.assignNewAsset = async (req, res) => {
     const {
         asset_id, brand, model, typeName,
@@ -567,24 +557,27 @@ exports.getAssetRepairs = async (req, res) => {
             SELECT 
                 rh.id, 
                 DATE_FORMAT(rh.date_reported, '%d-%m-%Y') as date_reported, 
+                DATE_FORMAT(rh.date_resolved, '%d-%m-%Y') as date_resolved, 
                 rh.issue_reported, 
                 rh.amount, 
-                rh.resolver_comments,
-                COALESCE(ah.employee_name, 'System/Unassigned') as employee_name
+                rh.status,
+                COALESCE(ah.employee_name, 'System/Inventory') as employee_name
             FROM repair_history rh
             LEFT JOIN assignment_history ah ON rh.asset_id = ah.asset_id 
-                AND rh.date_reported BETWEEN ah.from_date AND COALESCE(ah.to_date, CURDATE())
+                AND ah.from_date <= rh.date_reported
             WHERE rh.asset_id = ? 
-            ORDER BY rh.date_reported DESC`;
+            ORDER BY rh.id DESC 
+            LIMIT 100`; 
 
         const [rows] = await pool.query(query, [assetId]);
-        res.json(rows);
+        const uniqueRepairs = Array.from(new Map(rows.map(item => [item['id'], item])).values());
+        
+        res.json(uniqueRepairs);
     } catch (err) {
         console.error("Fetch repairs error:", err.message);
         res.status(500).json({ error: err.message });
     }
 };
-
 
 // 2. Add Repair
 exports.addRepair = async (req, res) => {

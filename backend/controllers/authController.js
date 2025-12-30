@@ -1,4 +1,5 @@
 const client = require('../config/oauth');
+const pool = require('../config/db');
 require('dotenv').config();
 
 exports.googleLogin = async (req, res) => {
@@ -10,22 +11,27 @@ exports.googleLogin = async (req, res) => {
         });
         const payload = ticket.getPayload();
         const email = payload.email;
+        const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
 
-        if (email === process.env.ADMIN_EMAIL) {
-            const adminUser = {
+        if (rows.length > 0) {
+            const dbUser = rows[0];
+            const userSession = {
                 name: payload.name,
                 email: payload.email,
-                role: 'admin'
+                role: dbUser.role 
             };
-            res.cookie('admin_session', JSON.stringify(adminUser), {
+            res.cookie('admin_session', JSON.stringify(userSession), {
                 httpOnly: true,
-                secure: false,
-                maxAge: 24 * 60 * 60 * 1000
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                maxAge: 24 * 60 * 60 * 1000 
             });
 
-            return res.json({ user: adminUser });
+            return res.json({ user: userSession });
         } else {
-            return res.status(403).json({ error: "Access Denied: Admin only." });
+            return res.status(403).json({ 
+                error: "Access Denied: You are not registered in the employee directory." 
+            });
         }
     } catch (error) {
         console.error("Auth Error:", error);
