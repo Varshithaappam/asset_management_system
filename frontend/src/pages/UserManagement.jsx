@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { UserPlus, Edit2, X, Trash2, Upload, Search, Package, Clock } from 'lucide-react';
+import { UserPlus, Edit2, Trash2, Upload, Search, Package, Clock, ShieldCheck } from 'lucide-react';
 import { useSnackbar } from '../context/SnackbarContext';
 import { useConfirm } from '../context/ConfirmContext';
 import { theme } from '../theme';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, MenuItem, TextField, Box } from '@mui/material';
 
 const UserManagement = ({ authUser }) => {
   const [users, setUsers] = useState([]);
@@ -12,7 +12,7 @@ const UserManagement = ({ authUser }) => {
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [formData, setFormData] = useState({ employee_id: '', name: '', email: '' });
+  const [formData, setFormData] = useState({ employee_id: '', name: '', email: '', role: 'Employee' });
 
   const [showProfile, setShowProfile] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
@@ -50,7 +50,7 @@ const UserManagement = ({ authUser }) => {
       const rows = text.split('\n').slice(1);
       const importedUsers = rows.map(row => {
         const [empId, name, email] = row.split(',');
-        return { employee_id: empId?.trim(), name: name?.trim(), email: email?.trim() };
+        return { employee_id: empId?.trim(), name: name?.trim(), email: email?.trim(), role: 'Employee' };
       }).filter(u => u.name && u.email);
       try {
         await axios.post('http://localhost:5000/api/users/bulk', { users: importedUsers });
@@ -63,16 +63,16 @@ const UserManagement = ({ authUser }) => {
   };
 
   const handleDelete = (user) => {
-    if (user.role === 'Admin') {
-      showSnackbar("Administrative accounts cannot be deleted", "error");
+    if (user.email === authUser?.email) {
+      showSnackbar("Cannot remove your own administrative access", "error");
       return;
     }
-    askConfirmation("Confirm Deletion", `Remove user access for ${user.name}?`, async () => {
+    askConfirmation("Deactivate User", `Are you sure you want to remove access for ${user.name}? This will mark the user as inactive.`, async () => {
       try {
         await axios.delete(`http://localhost:5000/api/users/${user.id}`);
-        showSnackbar("User removed", "success");
+        showSnackbar("User access removed", "success");
         fetchUsers();
-      } catch (err) { showSnackbar("Failed to delete user", "error"); }
+      } catch (err) { showSnackbar("Failed to deactivate user", "error"); }
     });
   };
 
@@ -81,21 +81,20 @@ const UserManagement = ({ authUser }) => {
     try {
       if (isEditing) {
         await axios.put(`http://localhost:5000/api/users/${selectedUser.id}`, formData);
-        showSnackbar("User updated", "success");
+        showSnackbar("User details and role updated", "success");
       } else {
         await axios.post('http://localhost:5000/api/users', formData);
-        showSnackbar("User added", "success");
+        showSnackbar("New user added successfully", "success");
       }
       setShowModal(false);
       fetchUsers();
-    } catch (err) { showSnackbar("Error saving user", "error"); }
+    } catch (err) { showSnackbar("Error saving user data", "error"); }
   };
 
   const filteredUsers = users.filter(user =>
     user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.employee_id?.toLowerCase().includes(searchQuery.toLowerCase())
-    
   );
 
   return (
@@ -133,13 +132,14 @@ const UserManagement = ({ authUser }) => {
               <input type="file" accept=".csv" className="hidden" onChange={handleFileUpload} />
             </label>
             <button
-              onClick={() => { setIsEditing(false); setFormData({ employee_id: '', name: '', email: '' }); setShowModal(true); }}
+              onClick={() => { setIsEditing(false); setFormData({ employee_id: '', name: '', email: '', role: 'Employee' }); setShowModal(true); }}
               className={`${theme.btnPrimary} px-2 py-2 rounded-xl flex items-center gap-2 transition shadow-lg`}
             >
               <UserPlus size={18} /> Add user
             </button>
           </div>
         </div>
+
         <div className={`${theme.cardBg} rounded-2xl ${theme.cardShadow} overflow-hidden border ${theme.cardBorder}`}>
           <table className="w-full text-left">
             <thead className={`${theme.tableHeaderBg} border-b ${theme.cardBorder} text-sm font-bold ${theme.tableHeaderText} uppercase`}>
@@ -166,23 +166,42 @@ const UserManagement = ({ authUser }) => {
                   <td className={`px-6 py-2 ${theme.mutedText} font-medium`}>{user.email}</td>
                   <td className="px-6 py-2 text-center">
                     {user.role === 'Admin' ? (
-                      <span className="bg-orange-600 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase">Admin</span>
+                      <span className="bg-orange-600 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase flex items-center justify-center gap-1 w-fit mx-auto">
+                        <ShieldCheck size={10} /> Admin
+                      </span>
+                    ) : user.role === 'Inactive' ? (
+                      <span className="bg-red-100 text-red-600 px-3 py-1 rounded-full text-[10px] font-black uppercase border border-red-200">
+                        Inactive
+                      </span>
                     ) : (
-                      <span className="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-[10px] font-bold uppercase">Employee</span>
+                      <span className="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-[10px] font-bold uppercase">
+                        Employee
+                      </span>
                     )}
                   </td>
                   <td className="px-6 py-2 text-center">
                     <div className="flex items-center justify-center gap-2">
-                      <button
-                        onClick={() => { setIsEditing(true); setSelectedUser(user); setFormData({ employee_id: user.employee_id, name: user.name, email: user.email }); setShowModal(true); }}
-                        className={`p-2 ${theme.statusAssigned} hover:${theme.iconBg} rounded-full transition`}
-                      >
-                        <Edit2 size={18} />
-                      </button>
-                      {user.role !== 'Admin' && (
-                        <button onClick={() => handleDelete(user)} className={`p-2 text-red-600 hover:bg-red-50 rounded-full transition`}>
-                          <Trash2 size={18} />
-                        </button>
+                      {user.role !== 'Inactive' ? (
+                        <>
+                          <button
+                            onClick={() => {
+                              setIsEditing(true);
+                              setSelectedUser(user);
+                              setFormData({ employee_id: user.employee_id, name: user.name, email: user.email, role: user.role });
+                              setShowModal(true);
+                            }}
+                            className={`p-2 ${theme.statusAssigned} hover:${theme.iconBg} rounded-full transition`}
+                          >
+                            <Edit2 size={18} />
+                          </button>
+                          {user.email !== authUser?.email && (
+                            <button onClick={() => handleDelete(user)} className={`p-2 text-red-600 hover:bg-red-50 rounded-full transition`}>
+                              <Trash2 size={18} />
+                            </button>
+                          )}
+                        </>
+                      ) : (
+                        <div className="text-sm font-medium text-gray-400 italic">No access</div>
                       )}
                     </div>
                   </td>
@@ -193,34 +212,47 @@ const UserManagement = ({ authUser }) => {
         </div>
       </div>
 
-      {/* MODAL 1: ADD/EDIT USER */}
       {showModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-2 z-50">
-          <form onSubmit={handleSubmit} className={`${theme.cardBg} p-6 rounded-3xl shadow-2xl max-w-md w-full border ${theme.cardBorder}`}>
-            <h3 className={`text-xl font-semibold mb-2.5 uppercase tracking-tight ${theme.mainText}`}>{isEditing ? 'Update User' : 'Add New User'}</h3>
-            <div className="space-y-5">
+          <form onSubmit={handleSubmit} className={`${theme.cardBg} p-8 rounded-3xl shadow-2xl max-w-md w-full border ${theme.cardBorder}`}>
+            <h3 className="text-2xl font-black mb-6 uppercase tracking-tighter text-gray-900">
+              {isEditing ? 'Modify User Privileges' : 'Register New User'}
+            </h3>
+            <div className="space-y-6">
               <div>
-                <label className={`block text-xs font-semibold ${theme.mutedText} mb-1 uppercase tracking-wider`}>Employee ID</label>
-                <input required className={`w-full bg-gray-50 border-2 ${theme.cardBorder} rounded-xl px-2 py-2 ${theme.mainText} outline-none focus:${theme.cardBorderHover} transition-all font-mono`} placeholder="e.g. GAD-001" value={formData.employee_id} onChange={(e) => setFormData({ ...formData, employee_id: e.target.value })} />
+                <label className="block text-[10px] font-black text-gray-400 mb-1.5 uppercase tracking-widest">Employee ID</label>
+                <input required className={`w-full bg-gray-50 border-2 ${theme.cardBorder} rounded-xl px-4 py-2.5 ${theme.mainText} outline-none focus:border-orange-500 transition-all font-mono text-sm`} placeholder="GAD-000" value={formData.employee_id} onChange={(e) => setFormData({ ...formData, employee_id: e.target.value })} />
               </div>
               <div>
-                <label className={`block text-xs font-semibold ${theme.mutedText} mb-1 uppercase tracking-wider`}>Full Name</label>
-                <input required className={`w-full bg-gray-50 border-2 ${theme.cardBorder} rounded-xl px-2 py-2 ${theme.mainText} outline-none focus:${theme.cardBorderHover} transition-all`} value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+                <label className="block text-[10px] font-black text-gray-400 mb-1.5 uppercase tracking-widest">Full Name</label>
+                <input required className={`w-full bg-gray-50 border-2 ${theme.cardBorder} rounded-xl px-4 py-2.5 ${theme.mainText} outline-none focus:border-orange-500 transition-all text-sm`} value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
               </div>
               <div>
-                <label className={`block text-xs font-semibold ${theme.mutedText} mb-1 uppercase tracking-wider`}>Email Address</label>
-                <input required type="email" className={`w-full bg-gray-50 border-2 ${theme.cardBorder} rounded-xl px-2 py-2 ${theme.mainText} outline-none focus:${theme.cardBorderHover} transition-all`} value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+                <label className="block text-[10px] font-black text-gray-400 mb-1.5 uppercase tracking-widest">Email Address</label>
+                <input required type="email" className={`w-full bg-gray-50 border-2 ${theme.cardBorder} rounded-xl px-4 py-2.5 ${theme.mainText} outline-none focus:border-orange-500 transition-all text-sm`} value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-gray-400 mb-1.5 uppercase tracking-widest">System Role</label>
+                <select
+                  className={`w-full bg-gray-50 border-2 ${theme.cardBorder} rounded-xl px-4 py-2.5 ${theme.mainText} outline-none focus:border-orange-500 transition-all text-sm font-bold`}
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                >
+                  <option value="Employee">Employee</option>
+                  <option value="Admin">Admin (Management Access)</option>
+                </select>
               </div>
             </div>
-            <div className="flex justify-end gap-3 mt-3">
-              <button type="button" onClick={() => setShowModal(false)} className={`px-2 py-2 ${theme.mutedText} font-bold hover:${theme.mainText} transition`}>Cancel</button>
-              <button type="submit" className={`px-2 py-2 ${theme.btnPrimary} rounded-xl font-bold shadow-md transition`}>Save User</button>
+            <div className="flex justify-end gap-4 mt-8">
+              <button type="button" onClick={() => setShowModal(false)} className="text-gray-400 font-bold hover:text-black transition uppercase text-xs tracking-widest">Discard</button>
+              <button type="submit" className="bg-orange-600 text-white px-8 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-orange-100 hover:bg-black transition-all">
+                {isEditing ? 'Update User' : 'Create User'}
+              </button>
             </div>
           </form>
         </div>
       )}
 
-      {/* MODAL 2: EMPLOYEE ASSET PROFILE */}
       <Dialog open={showProfile} onClose={() => setShowProfile(false)} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: '24px' } }}>
         <DialogTitle sx={{ p: 3, pb: 0 }}>
           <div className="flex justify-between items-center">
@@ -233,7 +265,6 @@ const UserManagement = ({ authUser }) => {
         </DialogTitle>
 
         <DialogContent dividers sx={{ backgroundColor: '#f9fafb', py: 4 }}>
-          {/* CURRENT ASSETS */}
           <div className="mb-8">
             <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4 flex items-center gap-2">
               <Package size={14} className="text-green-500" /> Currently Holding ({employeeAssets.currentAssets.length})
@@ -258,7 +289,6 @@ const UserManagement = ({ authUser }) => {
             </div>
           </div>
 
-          {/* HISTORY */}
           <div>
             <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4 flex items-center gap-2">
               <Clock size={14} /> Assignment History
@@ -284,7 +314,15 @@ const UserManagement = ({ authUser }) => {
                         <span className="mx-2 text-gray-300">→</span>
                         <span className="text-orange-600 font-bold">{h.to_date}</span>
                       </td>
-                      <td className="px-4 py-3 text-xs text-gray-500 italic">{h.remarks || '---'}</td>
+                      <td className="px-4 py-3">
+                        <div className="text-xs text-gray-500 italic">{h.remarks || '---'}</div>
+                        {h.remarks === 'Moved to Repair' && h.issue_reported && (
+                          <div className="mt-1">
+                            <span className="text-[9px] font-black uppercase text-red-400 tracking-tighter">Issue: </span>
+                            <span className="text-[10px] text-gray-600 font-bold">{h.issue_reported}</span>
+                          </div>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -296,7 +334,7 @@ const UserManagement = ({ authUser }) => {
           </div>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setShowProfile(false)} sx={{ fontWeight: 'bold', color: '#666', textTransform: 'uppercase', fontSize: '12px' }}>Close Profile</Button>
+          <Button onClick={() => setShowProfile(false)} sx={{ fontWeight: 'bold', color: '#666', textTransform: 'none', fontSize: '12px' }}>Close Profile</Button>
         </DialogActions>
       </Dialog>
     </div>

@@ -30,6 +30,7 @@ const AssetDetails = () => {
     const [showAssignModal, setShowAssignModal] = useState(false);
     const [showRegisterModal, setShowRegisterModal] = useState(false);
     const [showRepairModal, setShowRepairModal] = useState(false);
+    const [showSolveModal, setShowSolveModal] = useState(false);
     const [showEndModal, setShowEndModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [selectedAsset, setSelectedAsset] = useState(null);
@@ -47,7 +48,13 @@ const AssetDetails = () => {
     });
 
     const [repairData, setRepairData] = useState({
-        issue: '', cost: '', date: new Date().toISOString().split('T')[0]
+        issue: '', date: new Date().toISOString().split('T')[0]
+    });
+
+    const [solveData, setSolveData] = useState({
+        main_issue: '',
+        cost: '',
+        solved_date: new Date().toISOString().split('T')[0]
     });
 
     useEffect(() => {
@@ -134,28 +141,27 @@ const AssetDetails = () => {
     };
 
     const handleRepairSubmit = async () => {
-        askConfirmation("Confirm Repair", `Move ${selectedAsset.asset_id} to repairs?`, async () => {
-            try {
-                await axios.post('http://localhost:5000/api/assets/repair', {
-                    asset_id: selectedAsset.asset_id,
-                    ...repairData
-                });
-                showSnackbar("Asset sent to repairs", "success");
-                setShowRepairModal(false);
-                setRepairData({ issue: '', cost: '', date: new Date().toISOString().split('T')[0] });
-                fetchAssets();
-            } catch (err) { showSnackbar("Failed to update status", "error"); }
-        });
+        try {
+            await axios.post('http://localhost:5000/api/assets/repair', {
+                asset_id: selectedAsset.asset_id,
+                issue: repairData.issue,
+                date: repairData.date
+            });
+            showSnackbar("Asset sent to repairs", "success");
+            setShowRepairModal(false);
+            setRepairData({ issue: '', date: new Date().toISOString().split('T')[0] });
+            fetchAssets();
+        } catch (err) { showSnackbar("Failed to update status", "error"); }
     };
 
-    const handleSolveRepair = async (assetId) => {
-        askConfirmation("Confirm Resolution", "Has this hardware issue been resolved?", async () => {
-            try {
-                await axios.put(`http://localhost:5000/api/assets/solve-repair/${assetId}`);
-                showSnackbar("Repair marked as solved!", "success");
-                fetchAssets();
-            } catch (err) { showSnackbar("Failed to update status", "error"); }
-        });
+    const handleSolveSubmit = async () => {
+        try {
+            await axios.put(`http://localhost:5000/api/assets/solve-repair/${selectedAsset.asset_id}`, solveData);
+            showSnackbar("Repair marked as solved!", "success");
+            setShowSolveModal(false);
+            setSolveData({ main_issue: '', cost: '', solved_date: new Date().toISOString().split('T')[0] });
+            fetchAssets();
+        } catch (err) { showSnackbar("Failed to update status", "error"); }
     };
 
     const handleEndAssignment = async () => {
@@ -199,8 +205,6 @@ const AssetDetails = () => {
     };
 
     const tabs = ['Inventory', 'Assigned', 'Repairs', 'Retired'];
-
-    // Conditional row interaction logic
     const isInteractive = activeTab === 'Inventory' || activeTab === 'Assigned';
 
     return (
@@ -235,7 +239,6 @@ const AssetDetails = () => {
                                     {activeTab === 'Repairs' ? (
                                         <>
                                             <th className="px-6 py-3">Issue Reported</th>
-                                            <th className="px-6 py-3 text-center">Repair Cost</th>
                                         </>
                                     ) : (
                                         typeName === 'Laptop' && <><th className="px-6 py-3">Processor & RAM</th><th className="px-6 py-2">Storage & OS</th></>
@@ -267,7 +270,7 @@ const AssetDetails = () => {
                                         {activeTab === 'Repairs' ? (
                                             <>
                                                 <td className="px-6 py-2 text-sm text-red-600 font-semibold italic">{asset.issue_reported || 'No issue described'}</td>
-                                                <td className="px-6 py-2 text-sm font-bold text-gray-800 text-center">₹{asset.amount || '0.00'}</td>
+                                                {/* <td className="px-6 py-2 text-sm font-bold text-gray-800 text-center">₹{asset.amount || '0.00'}</td> */}
                                             </>
                                         ) : (
                                             typeName === 'Laptop' && (
@@ -288,7 +291,10 @@ const AssetDetails = () => {
                                             <div className="flex justify-center gap-2 items-center">
                                                 {activeTab === 'Inventory' && (
                                                     asset.status === 'Repairs' ? (
-                                                        <span className="text-[10px] font-black text-red-500 bg-red-50 px-4 py-1.5 rounded-xl border border-red-100 uppercase italic">In Repair</span>
+                                                        <>
+                                                            <span className="text-[10px] font-black text-red-500 bg-red-50 px-4 py-1.5 rounded-xl border border-red-100 uppercase italic">In Repair</span>
+                                                            <button onClick={(e) => { e.stopPropagation(); handleRetireAsset(asset.asset_id); }} className="bg-gray-800 text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase hover:bg-red-600 transition">Retire</button>
+                                                        </>
                                                     ) : (
                                                         <>
                                                             <button onClick={(e) => { e.stopPropagation(); setSelectedAsset(asset); setShowAssignModal(true); }} className="bg-orange-600 text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase shadow-md">Assign</button>
@@ -303,13 +309,13 @@ const AssetDetails = () => {
                                                 )}
                                                 {activeTab === 'Assigned' && (
                                                     <div className="flex items-center gap-2">
-                                                        <button onClick={(e) => { e.stopPropagation(); setSelectedAsset(asset); setShowEndModal(true); }} className="bg-white text-gray-600 border border-gray-300 px-4 py-1.5 rounded-xl text-[10px] font-black uppercase hover:bg-orange-600 hover:text-white transition shadow-sm">End</button>
+                                                        <button onClick={(e) => { e.stopPropagation(); setSelectedAsset(asset); setShowEndModal(true); }} className="bg-white text-gray-600 border border-gray-300 px-4 py-1.5 rounded-xl text-[10px] font-black uppercase hover:bg-orange-600 hover:text-white transition shadow-sm">Surrender</button>
                                                         <button onClick={(e) => { e.stopPropagation(); setSelectedAsset(asset); setShowRepairModal(true); }} className="bg-gray-100 text-gray-600 border px-4 py-1.5 rounded-xl text-[10px] font-black uppercase transition">Repair</button>
                                                     </div>
                                                 )}
                                                 {activeTab === 'Repairs' && (
                                                     <div className="flex items-center gap-2">
-                                                        <button onClick={(e) => { e.stopPropagation(); handleSolveRepair(asset.asset_id); }} className="bg-green-600 text-white px-4 py-1.5 rounded-xl text-[10px] font-black uppercase shadow-md">Mark Solved</button>
+                                                        <button onClick={(e) => { e.stopPropagation(); setSelectedAsset(asset); setShowSolveModal(true); }} className="bg-green-600 text-white px-4 py-1.5 rounded-xl text-[10px] font-black uppercase shadow-md">Solved</button>
                                                         <button onClick={(e) => { e.stopPropagation(); handleRetireAsset(asset.asset_id); }} className="bg-gray-800 text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase hover:bg-red-600 transition">Retire</button>
                                                     </div>
                                                 )}
@@ -381,27 +387,42 @@ const AssetDetails = () => {
                     </Dialog>
 
                     <Dialog open={showAssignModal} onClose={() => setShowAssignModal(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '28px', p: 1 } }}>
-                        <DialogTitle sx={{ fontWeight: 900, textTransform: 'uppercase', pt: 3, px: 4 }}>Assign to Employee</DialogTitle>
+                        <DialogTitle sx={{ fontWeight: 600, textTransform: 'uppercase', pt: 2, px: 4 }}>Assign to Employee</DialogTitle>
                         <DialogContent sx={{ px: 4, py: 2 }}>
                             <Grid container spacing={3}>
-                                <Grid item xs={12}><Box sx={{ mb: 1 }}><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">1. Search Employee</label></Box><TextField fullWidth placeholder="Type Name or GAD ID..." value={empSearch} onChange={(e) => setEmpSearch(e.target.value)} InputProps={{ startAdornment: <Search size={18} className="mr-2 text-gray-400" />, sx: { backgroundColor: '#f9fafb', borderRadius: '12px' } }} /></Grid>
-                                <Grid item xs={12}><Box sx={{ mb: 1 }}><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">2. Select Results</label></Box><TextField select fullWidth value={assignData.employee_id} onChange={(e) => { const emp = allEmployees.find(u => u.employee_id === e.target.value); setAssignData({ ...assignData, employee_id: emp.employee_id, employee_name: emp.name }); }} InputProps={{ sx: { borderRadius: '12px' } }}>{filteredEmployees.map((emp) => (<MenuItem key={emp.id} value={emp.employee_id} sx={{ py: 1.5, borderBottom: '1px solid #f3f4f6' }}><Box sx={{ display: 'flex', flexDirection: 'column' }}><span className="font-bold text-gray-900">{emp.name}</span><span className="text-[10px] text-orange-500 font-black uppercase tracking-tighter">{emp.employee_id}</span></Box></MenuItem>))}</TextField></Grid>
-                                <Grid item xs={12}><Box sx={{ mb: 1 }}><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">3. Assignment Date</label></Box><TextField fullWidth type="date" InputLabelProps={{ shrink: true }} value={assignData.from_date} onChange={(e) => setAssignData({ ...assignData, from_date: e.target.value })} InputProps={{ sx: { borderRadius: '12px' } }} /></Grid>
+                                {/* <Grid item xs={12}><Box sx={{ mb: 1 }}><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Search Employee and select in results</label></Box><TextField fullWidth placeholder="Type Name or GAD ID..." value={empSearch} onChange={(e) => setEmpSearch(e.target.value)} InputProps={{ startAdornment: <Search size={18} className="mr-2 text-gray-400" />, sx: { backgroundColor: '#f9fafb', borderRadius: '12px' } }} /></Grid> */}
+                                <Grid item xs={12}><Box sx={{ mb: 1 }}><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Select Results</label></Box><TextField select fullWidth value={assignData.employee_id} onChange={(e) => 
+                                { const emp = allEmployees.find(u => u.employee_id === e.target.value); 
+                                    setAssignData({ ...assignData, employee_id: emp.employee_id, employee_name: emp.name }); }} InputProps={{ sx: { borderRadius: '12px' } }}>{filteredEmployees.map((emp) => (<MenuItem key={emp.id} value={emp.employee_id} sx={{ py: 1.5, borderBottom: '1px solid #f3f4f6' }}>
+                                <Box sx={{ display: 'flex', flexDirection: 'column' }}><span className="font-bold text-gray-900">{emp.name}</span><span className="text-[10px] text-orange-500 font-black uppercase tracking-tighter">{emp.employee_id}</span></Box></MenuItem>))}</TextField></Grid>
+                                <Grid item xs={12}><Box sx={{ mb: 1 }}><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Assignment Date</label></Box><TextField fullWidth type="date" InputLabelProps={{ shrink: true }} value={assignData.from_date} onChange={(e) => setAssignData({ ...assignData, from_date: e.target.value })} InputProps={{ sx: { borderRadius: '12px' } }} /></Grid>
                             </Grid>
                         </DialogContent>
-                        <DialogActions sx={{ p: 4, pt: 1 }}><Button onClick={() => setShowAssignModal(false)} sx={{ color: 'gray', fontWeight: 'bold' }}>Cancel</Button><Button variant="contained" onClick={handleAssignSubmit} disabled={!assignData.employee_id} sx={{ px: 4, py: 1.2, borderRadius: '12px', fontWeight: '900', backgroundColor: '#ea580c' }}>Confirm Assignment</Button></DialogActions>
+                        <DialogActions sx={{ p: 4, pt: 1 }}><Button onClick={() => setShowAssignModal(false)} sx={{ color: 'gray', fontWeight: 'bold' }}>Cancel</Button><Button variant="contained" onClick={handleAssignSubmit} disabled={!assignData.employee_id} sx={{ px: 2, py: 1.2, borderRadius: '12px', fontWeight: '600', backgroundColor: '#ea580c' }}>Confirm Assignment</Button></DialogActions>
                     </Dialog>
-
                     <Dialog open={showRepairModal} onClose={() => setShowRepairModal(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '28px', p: 1 } }}>
-                        <DialogTitle sx={{ fontWeight: 900, textTransform: 'uppercase', pt: 3, px: 4 }}>Move to Repair: {selectedAsset?.asset_id}</DialogTitle>
+                        <DialogTitle sx={{ fontWeight: 600, textTransform: 'uppercase', pt: 2, px: 4 }}>Move to Repair: {selectedAsset?.asset_id}</DialogTitle>
                         <DialogContent sx={{ px: 4, py: 2 }}>
                             <Grid container spacing={3}>
-                                <Grid item xs={12}><Box sx={{ mb: 1 }}><label className="text-[10px] font-black text-gray-400 uppercase">1. Issue Description</label></Box><TextField fullWidth multiline rows={3} placeholder="Describe problem..." value={repairData.issue} onChange={e => setRepairData({ ...repairData, issue: e.target.value })} /></Grid>
-                                <Grid item xs={6}><Box sx={{ mb: 1 }}><label className="text-[10px] font-black text-gray-400 uppercase">2. Cost</label></Box><TextField fullWidth type="number" value={repairData.cost} onChange={e => setRepairData({ ...repairData, cost: e.target.value })} /></Grid>
-                                <Grid item xs={6}><Box sx={{ mb: 1 }}><label className="text-[10px] font-black text-gray-400 uppercase">3. Date</label></Box><TextField fullWidth type="date" InputLabelProps={{ shrink: true }} value={repairData.date} onChange={e => setRepairData({ ...repairData, date: e.target.value })} /></Grid>
+                                <Grid item xs={12}><Box sx={{ mb: 1 }}><label className="text-[10px] font-black text-gray-400 uppercase">Issue Description (Faced)</label></Box><TextField fullWidth multiline rows={3} placeholder="Describe the issue reported..." value={repairData.issue} onChange={e => setRepairData({ ...repairData, issue: e.target.value })} /></Grid>
+                                <Grid item xs={12}><Box sx={{ mb: 1 }}><label className="text-[10px] font-black text-gray-400 uppercase">Reported Date</label></Box><TextField fullWidth type="date" InputLabelProps={{ shrink: true }} value={repairData.date} onChange={e => setRepairData({ ...repairData, date: e.target.value })} /></Grid>
                             </Grid>
                         </DialogContent>
                         <DialogActions sx={{ p: 4, pt: 1 }}><Button onClick={() => setShowRepairModal(false)}>Cancel</Button><Button variant="contained" onClick={handleRepairSubmit} sx={{ backgroundColor: '#ef4444' }}>Move to Repairs</Button></DialogActions>
+                    </Dialog>
+                    <Dialog open={showSolveModal} onClose={() => setShowSolveModal(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '28px', p: 1 } }}>
+                        <DialogTitle sx={{ fontWeight: 600, textTransform: 'uppercase', pt: 2, px: 4 }}>Resolve Repair: {selectedAsset?.asset_id}</DialogTitle>
+                        <DialogContent sx={{ px: 4, py: 2 }}>
+                            <Grid container spacing={3}>
+                                <Grid item xs={12}><Box sx={{ mb: 1 }}><label className="text-[10px] font-black text-gray-400 uppercase">Actual Issue Fixed</label></Box><TextField fullWidth multiline rows={2} placeholder="What was the final diagnosis/fix?" value={solveData.main_issue} onChange={e => setSolveData({ ...solveData, main_issue: e.target.value })} /></Grid>
+                                <Grid item xs={6}><Box sx={{ mb: 1 }}><label className="text-[10px] font-black text-gray-400 uppercase">Final Repair Cost</label></Box><TextField fullWidth type="number" placeholder="0.00" value={solveData.cost} onChange={e => setSolveData({ ...solveData, cost: e.target.value })} /></Grid>
+                                <Grid item xs={6}><Box sx={{ mb: 1 }}><label className="text-[10px] font-black text-gray-400 uppercase">Resolution Date</label></Box><TextField fullWidth type="date" InputLabelProps={{ shrink: true }} value={solveData.solved_date} onChange={e => setSolveData({ ...solveData, solved_date: e.target.value })} /></Grid>
+                            </Grid>
+                        </DialogContent>
+                        <DialogActions sx={{ p: 4, pt: 1 }}>
+                            <Button onClick={() => setShowSolveModal(false)}>Cancel</Button>
+                            <Button variant="contained" onClick={handleSolveSubmit} sx={{ backgroundColor: '#16a34a' }}>Confirm Resolution</Button>
+                        </DialogActions>
                     </Dialog>
                 </div>
             </div>

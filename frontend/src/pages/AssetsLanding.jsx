@@ -68,7 +68,7 @@ const AssetsLanding = () => {
             <div 
               key={type.id} 
               onClick={() => navigate(`/assets/${type.name}`)} 
-              className={`group ${theme.cardBg} p-2 rounded-2xl border-2 ${theme.cardBorder} hover:${theme.tableRowHover} hover:${theme.cardBorderHover} transition-all cursor-pointer ${theme.cardShadow} hover:${theme.cardShadowHover}`}
+              className={`group ${theme.cardBg} p-2 rounded-2xl border-2 ${theme.cardBorder} hover:${theme.tableRowHover} hover:border-orange-200 hover:${theme.cardBorderHover} transition-all cursor-pointer ${theme.cardShadow} hover:${theme.cardShadowHover}`}
             >
               <div className="flex flex-col items-center text-center mb-2">
                 {/* <div className={`${theme.iconText} mb-4 p-4 ${theme.iconBg} rounded-2xl group-hover:scale-110 transition-transform`}>
@@ -78,11 +78,11 @@ const AssetsLanding = () => {
               </div>
                 <div className={`space-y-1 mt-1 pt-2 border-t ${theme.tableRowBorder}`}>
                 <div className="flex justify-between items-center">
-                  <span className={`${theme.mutedText} uppercase text-[10px] font-bold`}>Idle Inventory</span>
+                  <span className={`${theme.mutedText} uppercase text-[10px] font-bold`}>Inventory</span>
                   <span className="font-mono font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded">{type.inventory_count}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className={`${theme.mutedText} uppercase text-[10px] font-bold`}>Active Assigned</span>
+                  <span className={`${theme.mutedText} uppercase text-[10px] font-bold`}>Assigned</span>
                   <span className={`font-mono font-bold ${theme.statusAssigned} bg-orange-50 px-2 py-0.5 rounded`}>
                     {type.assigned_count}
                   </span>

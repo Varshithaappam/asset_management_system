@@ -23,10 +23,8 @@ const AssetHistory = () => {
 
     const fetchAssetData = async () => {
         try {
-            // Fetch Assignment History
             const histRes = await axios.get(`http://localhost:5000/api/assets/history/${assetId}`);
             setHistory(histRes.data);
-            // Fetch Repair History
             const repairRes = await axios.get(`http://localhost:5000/api/assets/repairs/${assetId}`);
             setRepairs(repairRes.data);
         } catch (err) {
@@ -42,7 +40,6 @@ const AssetHistory = () => {
         <ThemeProvider theme={orangeMuiTheme}>
             <div className={`min-h-screen ${theme.pageBg} ${theme.mainText} p-5`}>
                 <div className="max-w-7xl mx-auto">
-                    {/* Simplified Header */}
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-4">
                             <button onClick={() => navigate(-1)} className={`p-2 hover:${theme.iconBg} rounded-full ${theme.iconText} transition`}>
@@ -54,8 +51,6 @@ const AssetHistory = () => {
                             </div>
                         </div>
                     </div>
-
-                    {/* Unified History Container */}
                     <div className={`bg-white rounded-3xl ${theme.cardShadowHover} overflow-hidden border-2 ${theme.cardBorder}`}>
                         <div className={`p-2 ${theme.tableHeaderBg} border-b ${theme.cardBorder} flex flex-col md:flex-row items-center justify-between gap-4`}>
                             <div className="flex items-center gap-4">
@@ -117,6 +112,7 @@ const AssetHistory = () => {
                                                 <th className="px-6 py-3">Issue Description</th>
                                                 <th className="px-6 py-3 text-center">Cost</th>
                                                 <th className="px-6 py-3">Date Reported</th>
+                                                <th className="px-6 py-3">Date Resolved</th> 
                                             </tr>
                                         </thead>
                                         <tbody className={`divide-y ${theme.tableRowBorder}`}>
@@ -129,16 +125,19 @@ const AssetHistory = () => {
                                                         {repair.issue_reported}
                                                     </td>
                                                     <td className={`px-6 py-2.5 font-semibold text-sm text-center text-red-600`}>
-                                                        ₹{repair.amount}
+                                                        {repair.amount > 0 ? `₹${repair.amount}` : "₹0"}
                                                     </td>
                                                     <td className={`px-6 py-2.5 ${theme.mutedText} font-mono text-xs font-semibold`}>
                                                         {repair.date_reported}
                                                     </td>
+                                                    <td className={`px-6 py-2.5 text-green-600 font-mono text-xs font-bold`}>
+                                                        {repair.date_resolved || "Pending"}
+                                                    </td>
                                                 </tr>
                                             )) : (
                                                 <tr>
-                                                    <td colSpan="4" className={`px-6 py-6 text-center ${theme.mutedText} font-semibold text-[10px] uppercase tracking-widest italic opacity-50`}>
-                                                        No maintenance history recorded for this asset.
+                                                    <td colSpan="5" className="px-6 py-10 text-center opacity-50 uppercase text-[10px] font-black">
+                                                        No maintenance history found.
                                                     </td>
                                                 </tr>
                                             )}

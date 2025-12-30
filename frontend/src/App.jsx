@@ -74,7 +74,7 @@ function App() {
 
   return (
     <div className={`min-h-screen ${theme.pageBg} flex flex-col`}>
-      <nav className={`bg-white ${theme.cardShadow} border-b  px-6 py-4  flex items-center justify-between sticky top-0 z-50`}>
+      <nav className={`bg-white ${theme.cardShadow} border-b border-black/15 shadow-slate-100 px-6 py-4  flex items-center justify-between sticky top-0 z-50`}>
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-3">
             <div >
