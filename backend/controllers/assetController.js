@@ -7,17 +7,10 @@ exports.getAllAssetTypes = async (req, res) => {
             SELECT 
                 at.id, 
                 at.name, 
-                at.total_limit,
-                (SELECT COUNT(*) 
-                 FROM assignment_history ah 
-                 WHERE ah.asset_id IN (SELECT a.asset_id FROM assets a WHERE a.type_id = at.id)
-                 AND ah.to_date IS NULL) AS assigned_count,
-                (SELECT COUNT(*) 
-                 FROM assets a 
-                 WHERE a.type_id = at.id) AS total_registered,
-                (SELECT COUNT(*) 
-                 FROM repair_history rh 
-                 WHERE rh.asset_id IN (SELECT a.asset_id FROM assets a WHERE a.type_id = at.id)) AS repair_count
+                (SELECT COUNT(*) FROM assets a WHERE a.type_id = at.id AND a.status = 'Inventory') AS inventory_count,
+                (SELECT COUNT(*) FROM assets a WHERE a.type_id = at.id AND a.status = 'Assigned') AS assigned_count,
+                (SELECT COUNT(*) FROM assets a WHERE a.type_id = at.id AND a.status = 'Repairs') AS repair_count,
+                (SELECT COUNT(*) FROM assets a WHERE a.type_id = at.id AND a.status = 'Retired') AS retired_count
             FROM asset_types at
             WHERE at.delete_stat = 0
             ORDER BY at.name ASC
@@ -25,26 +18,21 @@ exports.getAllAssetTypes = async (req, res) => {
 
         const [rows] = await pool.query(query);
 
-        const formattedRows = rows.map(row => {
-            const assigned = row.assigned_count || 0;
-            const total = row.total_limit || 20;
-
-            return {
-                id: row.id,
-                name: row.name,
-                total_limit: total,
-                assigned_count: assigned,
-                inventory_count: total - assigned,
-                repair_count: row.repair_count || 0
-            };
-        });
+        // Map the rows to match the frontend expectation
+        const formattedRows = rows.map(row => ({
+            id: row.id,
+            name: row.name,
+            inventory_count: row.inventory_count || 0,
+            assigned_count: row.assigned_count || 0,
+            repair_count: row.repair_count || 0,
+            retired_count: row.retired_count || 0
+        }));
 
         res.json(formattedRows);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 };
-
 exports.createAssetType = async (req, res) => {
     const { name } = req.body;
     try {
@@ -58,6 +46,303 @@ exports.createAssetType = async (req, res) => {
     }
 };
 
+exports.retireAsset = async (req, res) => {
+    const { assetId } = req.params;
+    try {
+        const query = "UPDATE assets SET status = 'Retired' WHERE asset_id = ?";
+        const [result] = await pool.query(query, [assetId]);
+        
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Asset not found" });
+        }
+        
+        res.json({ message: "Asset moved to Retired status" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// 1. Get Assets by Category and Status (For the 4-tab slider)
+exports.getAssetsByStatus = async (req, res) => {
+    const { typeName, status } = req.params;
+    try {
+        let query;
+        let params = [typeName];
+
+        if (status === 'Inventory') {
+            query = `
+                SELECT a.* FROM assets a
+                JOIN asset_types at ON a.type_id = at.id
+                WHERE at.name = ? AND a.status IN ('Inventory', 'Repairs')
+                AND a.status != 'Deleted'
+            `;
+        } else if (status === 'Repairs') {
+            query = `
+                SELECT a.*, rh.issue_reported, rh.amount 
+                FROM assets a
+                JOIN asset_types at ON a.type_id = at.id
+                LEFT JOIN repair_history rh ON a.asset_id = rh.asset_id AND rh.status = 'Pending'
+                WHERE at.name = ? AND a.status = 'Repairs'
+            `;
+        } else {
+            query = `
+                SELECT a.*, ah.employee_id, ah.employee_name, 
+                       DATE_FORMAT(ah.from_date, '%Y-%m-%d') as assign_date
+                FROM assets a
+                JOIN asset_types at ON a.type_id = at.id
+                LEFT JOIN assignment_history ah ON a.asset_id = ah.asset_id AND ah.to_date IS NULL
+                WHERE at.name = ? AND a.status = ?
+            `;
+            params.push(status);
+        }
+
+        const [rows] = await pool.query(query, params);
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.solveRepair = async (req, res) => {
+    const { asset_id } = req.params;
+    const connection = await pool.getConnection();
+
+    try {
+        await connection.beginTransaction();
+        const updateAssetQuery = "UPDATE assets SET status = 'Inventory' WHERE asset_id = ?";
+        await connection.query(updateAssetQuery, [asset_id]);
+        const updateHistoryQuery = `
+            UPDATE repair_history 
+            SET status = 'Fixed' 
+            WHERE asset_id = ? AND status = 'Pending'
+        `;
+        await connection.query(updateHistoryQuery, [asset_id]);
+        
+        await connection.commit();
+        res.status(200).json({ message: "Asset is now fixed and available in Inventory" });
+    } catch (err) {
+        await connection.rollback();
+        console.error("Solve Repair Error:", err);
+        res.status(500).json({ error: "Server failed to process the repair resolution" });
+    } finally {
+        connection.release();
+    }
+};
+// 2. Assign an existing asset from Inventory
+exports.assignExistingAsset = async (req, res) => {
+    const { asset_id, employee_id, employee_name, from_date } = req.body;
+    const connection = await pool.getConnection();
+    try {
+        await connection.beginTransaction();
+        await connection.query(
+            "UPDATE assets SET status = 'Assigned' WHERE asset_id = ?",
+            [asset_id]
+        );
+        await connection.query(
+            "INSERT INTO assignment_history (asset_id, employee_id, employee_name, from_date) VALUES (?, ?, ?, ?)",
+            [asset_id, employee_id, employee_name, from_date]
+        );
+
+        await connection.commit();
+        res.json({ message: "Asset assigned successfully" });
+    } catch (err) {
+        await connection.rollback();
+        res.status(500).json({ error: err.message });
+    } finally {
+        connection.release();
+    }
+};
+
+exports.moveToRepair = async (req, res) => {
+    const { asset_id, issue, cost, date } = req.body;
+    const connection = await pool.getConnection();
+    try {
+        await connection.beginTransaction();
+
+        // 1. Update Asset Status
+        await connection.query(
+            "UPDATE assets SET status = 'Repairs' WHERE asset_id = ?",
+            [asset_id]
+        );
+
+        // 2. Insert into Repair History
+        await connection.query(
+            "INSERT INTO repair_history (asset_id, issue_reported, repair_cost, repair_date) VALUES (?, ?, ?, ?)",
+            [asset_id, issue, cost, date]
+        );
+
+        await connection.commit();
+        res.json({ message: "Asset moved to Repairs successfully" });
+    } catch (err) {
+        await connection.rollback();
+        res.status(500).json({ error: err.message });
+    } finally {
+        connection.release();
+    }
+};
+
+// backend/controllers/assetController.js
+
+exports.moveToRepair = async (req, res) => {
+    const { asset_id, issue, cost, date } = req.body;
+    const connection = await pool.getConnection();
+
+    try {
+        await connection.beginTransaction();
+
+        // 1. Update the asset status in the assets table
+        const updateQuery = "UPDATE assets SET status = 'Repairs' WHERE asset_id = ?";
+        await connection.query(updateQuery, [asset_id]);
+
+        // 2. Insert the repair details into repair_history table
+        // Note: Ensure your table has columns: asset_id, issue_reported, amount, date_reported
+        const historyQuery = `
+            INSERT INTO repair_history 
+            (asset_id, issue_reported, amount, date_reported) 
+            VALUES (?, ?, ?, ?)
+        `;
+        await connection.query(historyQuery, [asset_id, issue, cost || 0, date]);
+
+        await connection.commit();
+        res.status(200).json({ message: "Asset successfully moved to repairs" });
+    } catch (err) {
+        await connection.rollback();
+        console.error("Repair Error:", err);
+        res.status(500).json({ error: "Failed to process repair request" });
+    } finally {
+        connection.release();
+    }
+};
+
+// backend/controllers/assetController.js
+
+exports.unassignAsset = async (req, res) => {
+    const { asset_id } = req.params;
+    const { remarks } = req.body;
+    const connection = await pool.getConnection();
+
+    try {
+        await connection.beginTransaction();
+
+        // 1. Update assignment_history to set the 'to_date' (End the assignment)
+        await connection.query(
+            "UPDATE assignment_history SET to_date = CURDATE(), remarks = ? WHERE asset_id = ? AND to_date IS NULL",
+            [remarks || 'Returned', asset_id]
+        );
+
+        // 2. IMPORTANT: Update the ASSETS table status back to 'Inventory'
+        // This is what makes it move from the Assigned tab to the Inventory tab
+        await connection.query(
+            "UPDATE assets SET status = 'Inventory' WHERE asset_id = ?",
+            [asset_id]
+        );
+
+        await connection.commit();
+        res.status(200).json({ message: "Assignment closed and asset returned to Inventory" });
+    } catch (err) {
+        await connection.rollback();
+        console.error(err);
+        res.status(500).json({ error: "Failed to process return" });
+    } finally {
+        connection.release();
+    }
+};
+
+exports.retireAsset = async (req, res) => {
+    const { assetId } = req.params;
+    const newStatus = req.body.status || 'Retired'; 
+
+    try {
+        const query = "UPDATE assets SET status = ? WHERE asset_id = ?";
+        const [result] = await pool.query(query, [newStatus, assetId]);
+        
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Asset not found" });
+        }
+        
+        res.json({ message: `Asset moved to ${newStatus} status` });
+    } catch (err) {
+        console.error("Update Status Error:", err.message);
+        res.status(500).json({ error: err.message });
+    }
+}; 
+
+exports.softDeleteAssetData = async (req, res) => {
+    const { assetId } = req.params; 
+    
+    try {
+        const query = "UPDATE assets SET status = 'Deleted' WHERE asset_id = ?";
+        const [result] = await pool.query(query, [assetId]);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Asset not found in database" });
+        }
+
+        res.json({ message: "Asset soft-deleted successfully" });
+    } catch (err) {
+        console.error("Soft Delete Error:", err.message);
+        res.status(500).json({ error: "Server error during soft delete" });
+    }
+};
+exports.updateAssetDetails = async (req, res) => {
+    const { assetId } = req.params;
+    const { 
+        brand, model, processor, ram, 
+        storage_capacity, os, screen_size, bought_on 
+    } = req.body;
+
+    try {
+        const query = `
+            UPDATE assets 
+            SET brand = ?, 
+                model = ?, 
+                processor = ?, 
+                ram = ?, 
+                storage_capacity = ?, 
+                os = ?, 
+                screen_size = ?, 
+                bought_on = ? 
+            WHERE asset_id = ?`;
+
+        const [result] = await pool.query(query, [
+            brand, 
+            model, 
+            processor || null, 
+            ram || null, 
+            storage_capacity || null, 
+            os || null, 
+            screen_size || null, 
+            bought_on || null, 
+            assetId
+        ]);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Asset not found" });
+        }
+
+        res.json({ message: "Asset details updated successfully" });
+    } catch (err) {
+        console.error("Update Error:", err.message);
+        res.status(500).json({ error: "Database update failed" });
+    }
+};
+
+exports.restoreAssetToInventory = async (req, res) => {
+    const { assetId } = req.params;
+    try {
+        const query = "UPDATE assets SET status = 'Inventory' WHERE asset_id = ?";
+        const [result] = await pool.query(query, [assetId]);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Asset not found" });
+        }
+
+        res.json({ message: "Asset restored to Inventory successfully" });
+    } catch (err) {
+        console.error("Restore Error:", err.message);
+        res.status(500).json({ error: err.message });
+    }
+};
 // ----------------------------------------------
 
 // assets
@@ -91,23 +376,38 @@ exports.getAssetDetailsByCategory = async (req, res) => {
 
 exports.addAsset = async (req, res) => {
     const {
-        asset_id, type_id, brand, model, bought_on,
+        asset_id, typeName, brand, model, bought_on,
         ram, processor, screen_size, os, storage_capacity
     } = req.body;
 
     try {
+        // 1. DYNAMIC LOOKUP: Find the ID for WHATEVER typeName is sent (Laptop, CPU, Mouse, etc.)
+        const [typeRows] = await pool.query('SELECT id FROM asset_types WHERE name = ?', [typeName]);
+        
+        if (typeRows.length === 0) {
+            return res.status(400).json({ error: `The category '${typeName}' does not exist. Please create the category first.` });
+        }
+        
+        const type_id = typeRows[0].id; // This gets the correct ID automatically
+
+        // 2. INSERT: Now insert the asset with the correct type_id
         const query = `
             INSERT INTO assets 
-            (asset_id, type_id, brand, model, bought_on, ram, processor, screen_size, os, storage_capacity) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (asset_id, type_id, brand, model, bought_on, ram, processor, screen_size, os, storage_capacity, status) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Inventory')
         `;
 
-        const [result] = await pool.query(query, [
-            asset_id, type_id, brand, model, bought_on,
-            ram, processor, screen_size, os, storage_capacity
+        await pool.query(query, [
+            asset_id, type_id, brand, model, 
+            bought_on || null,
+            ram || null, 
+            processor || null, 
+            screen_size || null, 
+            os || null, 
+            storage_capacity || null
         ]);
 
-        res.status(201).json({ message: "Asset registered successfully" });
+        res.status(201).json({ message: "Asset registered successfully to Inventory" });
     } catch (err) {
         if (err.code === 'ER_DUP_ENTRY') {
             return res.status(400).json({ error: "Asset ID already exists!" });

@@ -7,4 +7,6 @@ router.post('/', userController.createUser);
 router.put('/:id', userController.updateUser);
 router.delete('/:id', userController.deleteUser);
 
+router.post('/bulk', userController.bulkInsertUsers);
+router.get('/assets/:employeeId', userController.getEmployeeAssetProfile);
 module.exports = router;
