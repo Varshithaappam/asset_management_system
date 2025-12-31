@@ -7,12 +7,12 @@ const ConfirmContext = createContext();
 const orangeMuiTheme = createTheme({
   palette: {
     mode: 'light',
-    primary: { main: '#ea580c' }, // Matches theme.navBg orange-600
+    primary: { main: '#ea580c' }, 
   },
   components: {
     MuiButton: {
       styleOverrides: {
-        root: { borderRadius: '10px', fontWeight: 'bold', textTransform: 'none' }
+        root: { borderRadius: '10px', fontWeight: 'semibold', textTransform: 'none' }
       }
     },
     MuiDialog: {
@@ -44,7 +44,7 @@ export const ConfirmProvider = ({ children }) => {
       <ThemeProvider theme={orangeMuiTheme}>
         {children}
         <Dialog open={state.open} onClose={handleClose}>
-          <DialogTitle sx={{ fontWeight: '900', color: '#111827', pt: 3 }}>
+          <DialogTitle sx={{ fontWeight: '900', color: '#111827', pt: 2 }}>
             {state.title}
           </DialogTitle>
           <DialogContent>
@@ -52,7 +52,7 @@ export const ConfirmProvider = ({ children }) => {
               {state.message}
             </DialogContentText>
           </DialogContent>
-          <DialogActions sx={{ p: 3, gap: 1 }}>
+          <DialogActions sx={{ p: 2, gap: 1 }}>
             <Button onClick={handleClose} sx={{ color: '#6b7280' }}>
               Cancel
             </Button>

@@ -74,16 +74,16 @@ function App() {
 
   return (
     <div className={`min-h-screen ${theme.pageBg} flex flex-col`}>
-      <nav className={`bg-white ${theme.cardShadow} border-b border-black/15 shadow-slate-100 px-6 py-4  flex items-center justify-between sticky top-0 z-50`}>
+      <nav className={`bg-white ${theme.cardShadow} border-b border-black/15 shadow-slate-100 px-6 py-3.5  flex items-center justify-between sticky top-0 z-50`}>
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-3">
-            <div >
+            <Link to="/" className="cursor-pointer">
               <img
-              src={mylogo}
+                src={mylogo}
                 alt="Logo"
                 className="h-12 w-auto object-contain"
               />
-            </div>
+            </Link>
           </div>
           <div className={`flex bg-orange-600 p-1 rounded-xl border ${theme.navBorder}`}>
             <Link
@@ -108,8 +108,8 @@ function App() {
         </div>
 
         <div className="flex items-center gap-6">
-          <span className={`text-sm text-black hidden sm:block opacity-90`}>
-            Welcome, <span className="font-bold text-black">{authUser.name}</span>
+          <span className={`text-sm font-normal text-black hidden sm:block opacity-90`}>
+            Welcome, <span className="font-semibold text-black">{authUser.name}</span>
           </span>
           <button
             onClick={handleLogout}

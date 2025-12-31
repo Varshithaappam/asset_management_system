@@ -215,24 +215,24 @@ const UserManagement = ({ authUser }) => {
       {showModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-2 z-50">
           <form onSubmit={handleSubmit} className={`${theme.cardBg} p-8 rounded-3xl shadow-2xl max-w-md w-full border ${theme.cardBorder}`}>
-            <h3 className="text-2xl font-black mb-6 uppercase tracking-tighter text-gray-900">
+            <h3 className="text-xl font-semibold mb-3 uppercase tracking-tighter text-gray-900">
               {isEditing ? 'Modify User Privileges' : 'Register New User'}
             </h3>
             <div className="space-y-6">
               <div>
-                <label className="block text-[10px] font-black text-gray-400 mb-1.5 uppercase tracking-widest">Employee ID</label>
+                <label className="block text-[10px] font-semibold text-gray-400 mb-1 uppercase tracking-widest">Employee ID</label>
                 <input required className={`w-full bg-gray-50 border-2 ${theme.cardBorder} rounded-xl px-4 py-2.5 ${theme.mainText} outline-none focus:border-orange-500 transition-all font-mono text-sm`} placeholder="GAD-000" value={formData.employee_id} onChange={(e) => setFormData({ ...formData, employee_id: e.target.value })} />
               </div>
               <div>
-                <label className="block text-[10px] font-black text-gray-400 mb-1.5 uppercase tracking-widest">Full Name</label>
+                <label className="block text-[10px] font-semibold text-gray-400 mb-1 uppercase tracking-widest">Full Name</label>
                 <input required className={`w-full bg-gray-50 border-2 ${theme.cardBorder} rounded-xl px-4 py-2.5 ${theme.mainText} outline-none focus:border-orange-500 transition-all text-sm`} value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
               </div>
               <div>
-                <label className="block text-[10px] font-black text-gray-400 mb-1.5 uppercase tracking-widest">Email Address</label>
+                <label className="block text-[10px] font-semibold text-gray-400 mb-1 uppercase tracking-widest">Email Address</label>
                 <input required type="email" className={`w-full bg-gray-50 border-2 ${theme.cardBorder} rounded-xl px-4 py-2.5 ${theme.mainText} outline-none focus:border-orange-500 transition-all text-sm`} value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
               </div>
               <div>
-                <label className="block text-[10px] font-black text-gray-400 mb-1.5 uppercase tracking-widest">System Role</label>
+                <label className="block text-[10px] font-semibold text-gray-400 mb-1 uppercase tracking-widest">System Role</label>
                 <select
                   className={`w-full bg-gray-50 border-2 ${theme.cardBorder} rounded-xl px-4 py-2.5 ${theme.mainText} outline-none focus:border-orange-500 transition-all text-sm font-bold`}
                   value={formData.role}
@@ -243,9 +243,9 @@ const UserManagement = ({ authUser }) => {
                 </select>
               </div>
             </div>
-            <div className="flex justify-end gap-4 mt-8">
-              <button type="button" onClick={() => setShowModal(false)} className="text-gray-400 font-bold hover:text-black transition uppercase text-xs tracking-widest">Discard</button>
-              <button type="submit" className="bg-orange-600 text-white px-8 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-orange-100 hover:bg-black transition-all">
+            <div className="flex justify-end gap-4 mt-4">
+              <button type="button" onClick={() => setShowModal(false)} className="text-gray-400 font-semibold hover:text-black transition uppercase text-xs tracking-widest">Discard</button>
+              <button type="submit" className="bg-orange-600 text-white px-4 py-2.5 rounded-xl font-semibold text-xs uppercase tracking-widest shadow-lg shadow-orange-100 hover:bg-black transition-all">
                 {isEditing ? 'Update User' : 'Create User'}
               </button>
             </div>
@@ -254,32 +254,32 @@ const UserManagement = ({ authUser }) => {
       )}
 
       <Dialog open={showProfile} onClose={() => setShowProfile(false)} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: '24px' } }}>
-        <DialogTitle sx={{ p: 3, pb: 0 }}>
+        <DialogTitle sx={{ p: 2, pb: 0 }}>
           <div className="flex justify-between items-center">
             <div className="flex flex-col">
-              <span className="text-2xl font-black uppercase tracking-tighter text-gray-900">{selectedEmployee?.name}</span>
+              <span className="text-xl font-semibold uppercase tracking-tighter text-gray-900">{selectedEmployee?.name}</span>
               <span className="text-xs font-bold text-orange-600 tracking-widest uppercase">ID: {selectedEmployee?.employee_id}</span>
             </div>
             <button onClick={() => setShowProfile(false)} className="text-gray-400 hover:text-black transition text-xl">✕</button>
           </div>
         </DialogTitle>
 
-        <DialogContent dividers sx={{ backgroundColor: '#f9fafb', py: 4 }}>
-          <div className="mb-8">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4 flex items-center gap-2">
+        <DialogContent dividers sx={{ backgroundColor: '#f9fafb', py: 2 }}>
+          <div className="mb-4">
+            <h3 className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2 flex items-center gap-2">
               <Package size={14} className="text-green-500" /> Currently Holding ({employeeAssets.currentAssets.length})
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {employeeAssets.currentAssets.map(asset => (
-                <div key={asset.asset_id} className="bg-white p-4 rounded-2xl border border-orange-100 shadow-sm flex justify-between items-center">
+                <div key={asset.asset_id} className="bg-white p-3 rounded-2xl border border-orange-100 shadow-sm flex justify-between items-center">
                   <div>
-                    <p className="font-mono font-bold text-orange-600 text-sm">{asset.asset_id}</p>
-                    <p className="text-sm font-bold text-gray-800">{asset.brand} {asset.model}</p>
+                    <p className="font-mono font-semibold text-orange-600 text-sm">{asset.asset_id}</p>
+                    <p className="text-sm font-semibold text-gray-800">{asset.brand} {asset.model}</p>
                     <p className="text-[10px] uppercase font-medium text-gray-400">{asset.type}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Assigned On</p>
-                    <p className="text-xs font-black">{new Date(asset.from_date).toLocaleDateString()}</p>
+                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-tighter">Assigned On</p>
+                    <p className="text-xs font-semibold">{new Date(asset.from_date).toLocaleDateString()}</p>
                   </div>
                 </div>
               ))}
@@ -290,7 +290,7 @@ const UserManagement = ({ authUser }) => {
           </div>
 
           <div>
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4 flex items-center gap-2">
+            <h3 className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-2 flex items-center gap-2">
               <Clock size={14} /> Assignment History
             </h3>
             <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
@@ -306,7 +306,7 @@ const UserManagement = ({ authUser }) => {
                   {employeeAssets.history.map((h, idx) => (
                     <tr key={idx} className="text-sm hover:bg-gray-50 transition">
                       <td className="px-4 py-3">
-                        <p className="font-bold text-gray-800">{h.asset_id}</p>
+                        <p className="font-semibold text-gray-800">{h.asset_id}</p>
                         <p className="text-[10px] text-gray-400 font-medium uppercase">{h.type}</p>
                       </td>
                       <td className="px-4 py-3 text-xs">
@@ -318,7 +318,7 @@ const UserManagement = ({ authUser }) => {
                         <div className="text-xs text-gray-500 italic">{h.remarks || '---'}</div>
                         {h.remarks === 'Moved to Repair' && h.issue_reported && (
                           <div className="mt-1">
-                            <span className="text-[9px] font-black uppercase text-red-400 tracking-tighter">Issue: </span>
+                            <span className="text-[9px] font-semibold uppercase text-red-400 tracking-tighter">Issue: </span>
                             <span className="text-[10px] text-gray-600 font-bold">{h.issue_reported}</span>
                           </div>
                         )}
@@ -328,7 +328,7 @@ const UserManagement = ({ authUser }) => {
                 </tbody>
               </table>
               {employeeAssets.history.length === 0 && (
-                <div className="p-8 text-center text-[10px] text-gray-400 font-bold uppercase tracking-widest">No history records found.</div>
+                <div className="p-4 text-center text-[10px] text-gray-400 font-bold uppercase tracking-widest">No history records found.</div>
               )}
             </div>
           </div>

@@ -345,8 +345,8 @@ const AssetDetails = () => {
                     </div>
 
                     <Dialog open={showRegisterModal} onClose={() => { setShowRegisterModal(false); setIsEditing(false); }} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '28px' } }}>
-                        <DialogTitle sx={{ fontWeight: 900, textTransform: 'uppercase', pt: 3, px: 4 }}>{isEditing ? 'Edit Asset Details' : `Register New ${typeName}`}</DialogTitle>
-                        <DialogContent dividers sx={{ px: 4, py: 3 }}>
+                        <DialogTitle sx={{ fontWeight: 600, textTransform: 'uppercase', pt: 2, px: 4 }}>{isEditing ? 'Edit Asset Details' : `Register New ${typeName}`}</DialogTitle>
+                        <DialogContent dividers sx={{ px: 4, py: 1.5 }}>
                             <Grid container spacing={2.5}>
                                 <Grid item xs={6}><TextField fullWidth label="Asset ID" disabled={isEditing} value={registerData.asset_id} onChange={e => setRegisterData({ ...registerData, asset_id: e.target.value })} /></Grid>
                                 <Grid item xs={6}><TextField fullWidth label="Brand" value={registerData.brand} onChange={e => setRegisterData({ ...registerData, brand: e.target.value })} /></Grid>
@@ -363,52 +363,64 @@ const AssetDetails = () => {
                                 <Grid item xs={12}><TextField fullWidth type="date" label="Purchase Date" InputLabelProps={{ shrink: true }} value={registerData.bought_on} onChange={e => setRegisterData({ ...registerData, bought_on: e.target.value })} /></Grid>
                             </Grid>
                         </DialogContent>
-                        <DialogActions sx={{ p: 3, px: 4 }}>
+                        <DialogActions sx={{ p: 1.5, px: 3 }}>
                             <Button onClick={() => { setShowRegisterModal(false); setIsEditing(false); }} sx={{ color: 'gray', fontWeight: 'bold' }}>Cancel</Button>
                             <Button variant="contained" onClick={handleAddAsset} disabled={!registerData.asset_id}>{isEditing ? 'Update Details' : 'Save to Inventory'}</Button>
                         </DialogActions>
                     </Dialog>
 
                     <Dialog open={showEndModal} onClose={() => setShowEndModal(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '28px', p: 1 } }}>
-                        <DialogTitle sx={{ fontWeight: 900, textTransform: 'uppercase', pt: 3, px: 4 }}>End Assignment: {selectedAsset?.asset_id}</DialogTitle>
-                        <DialogContent sx={{ px: 4, py: 2 }}>
-                            <Box sx={{ mb: 3, p: 2, backgroundColor: '#fff7ed', borderRadius: '16px', border: '1px solid #ffedd5' }}>
-                                <p className="text-[11px] font-bold text-orange-800 uppercase tracking-wider mb-1">Current User</p>
-                                <p className="text-sm font-black text-gray-900">{selectedAsset?.employee_name}</p>
-                                <p className="text-[10px] font-bold text-orange-600 uppercase">{selectedAsset?.employee_id}</p>
+                        <DialogTitle sx={{ fontWeight: 600, textTransform: 'uppercase', pt: 2, px: 4 }}>End Assignment: {selectedAsset?.asset_id}</DialogTitle>
+                        <DialogContent sx={{ px: 4, py: 1 }}>
+                            <Box sx={{ mb: 1, p: 2, backgroundColor: '#fff7ed', borderRadius: '16px', border: '1px solid #ffedd5' }}>
+                                <p className="text-[11px] font-semibold text-orange-800 uppercase tracking-wider">Current User</p>
+                                <p className="text-sm font-semibold text-gray-900">{selectedAsset?.employee_name}</p>
+                                <p className="text-[10px] font-semibold text-orange-600 uppercase">{selectedAsset?.employee_id}</p>
                             </Box>
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Reason for Return / Remarks</label>
-                            <TextField fullWidth multiline rows={4} placeholder="e.g. Employee resigned, Upgrading device, etc." value={returnRemarks} onChange={(e) => setReturnRemarks(e.target.value)} />
+                            <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1 block">Reason for Return / Remarks</label>
+                            <TextField sx={{ fontWeight:50 }} fullWidth multiline rows={4} placeholder="e.g. Employee resigned, Upgrading device, etc." value={returnRemarks} onChange={(e) => setReturnRemarks(e.target.value)} />
                         </DialogContent>
-                        <DialogActions sx={{ p: 4, pt: 1 }}>
+                        <DialogActions sx={{ p: 2, pt: 1 }}>
                             <Button onClick={() => setShowEndModal(false)} sx={{ color: 'gray', fontWeight: 'bold' }}>Cancel</Button>
-                            <Button variant="contained" onClick={handleEndAssignment} sx={{ px: 4, borderRadius: '12px', backgroundColor: '#ea580c', '&:hover': { backgroundColor: '#000' } }}>Complete Return</Button>
+                            <Button variant="contained" onClick={handleEndAssignment} sx={{ px: 2, borderRadius: '12px', backgroundColor: '#ea580c', '&:hover': { backgroundColor: '#000' } }}>Complete Return</Button>
                         </DialogActions>
                     </Dialog>
 
                     <Dialog open={showAssignModal} onClose={() => setShowAssignModal(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '28px', p: 1 } }}>
-                        <DialogTitle sx={{ fontWeight: 600, textTransform: 'uppercase', pt: 2, px: 4 }}>Assign to Employee</DialogTitle>
-                        <DialogContent sx={{ px: 4, py: 2 }}>
+                        <DialogTitle sx={{ fontWeight: 600, textTransform: 'uppercase', pt: 1, px: 3 }}>Assign to Employee</DialogTitle>
+                        <DialogContent sx={{ px: 3, py: 1 }}>
                             <Grid container spacing={3}>
-                                {/* <Grid item xs={12}><Box sx={{ mb: 1 }}><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Search Employee and select in results</label></Box><TextField fullWidth placeholder="Type Name or GAD ID..." value={empSearch} onChange={(e) => setEmpSearch(e.target.value)} InputProps={{ startAdornment: <Search size={18} className="mr-2 text-gray-400" />, sx: { backgroundColor: '#f9fafb', borderRadius: '12px' } }} /></Grid> */}
-                                <Grid item xs={12}><Box sx={{ mb: 1 }}><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Select Results</label></Box><TextField select fullWidth value={assignData.employee_id} onChange={(e) => 
-                                { const emp = allEmployees.find(u => u.employee_id === e.target.value); 
-                                    setAssignData({ ...assignData, employee_id: emp.employee_id, employee_name: emp.name }); }} InputProps={{ sx: { borderRadius: '12px' } }}>{filteredEmployees.map((emp) => (<MenuItem key={emp.id} value={emp.employee_id} sx={{ py: 1.5, borderBottom: '1px solid #f3f4f6' }}>
-                                <Box sx={{ display: 'flex', flexDirection: 'column' }}><span className="font-bold text-gray-900">{emp.name}</span><span className="text-[10px] text-orange-500 font-black uppercase tracking-tighter">{emp.employee_id}</span></Box></MenuItem>))}</TextField></Grid>
-                                <Grid item xs={12}><Box sx={{ mb: 1 }}><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Assignment Date</label></Box><TextField fullWidth type="date" InputLabelProps={{ shrink: true }} value={assignData.from_date} onChange={(e) => setAssignData({ ...assignData, from_date: e.target.value })} InputProps={{ sx: { borderRadius: '12px' } }} /></Grid>
+                                <Grid item xs={12}><Box sx={{ mb: 1 }}>
+                                    <label className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Select Results</label>
+                                </Box>
+                                <TextField select fullWidth value={assignData.employee_id} onChange={(e) => 
+                                { 
+                                    const emp = allEmployees.find(u => u.employee_id === e.target.value); 
+                                    setAssignData({ ...assignData, employee_id: emp.employee_id, employee_name: emp.name }); }} 
+                                    InputProps={{ sx: {width:'250px',maxWidth:'100%', borderRadius: '12px','& .MuiSelect-select':{pr:2} } }}>
+                                        {filteredEmployees.map((emp) => (
+                                    <MenuItem key={emp.id} value={emp.employee_id} sx={{ py: 1, borderBottom: '1px solid #f3f4f6' }}>
+                                <Box sx={{ display: 'flex', flexDirection: 'column' }}><span className="font-semibold text-gray-900">{emp.name}</span><span className="text-[10px] text-orange-500 font-black uppercase tracking-tighter">{emp.employee_id}</span>
+                                </Box>
+                                </MenuItem>))}
+                                </TextField></Grid>
+                                <Grid item xs={12}><Box sx={{ mb: 1 }}><label className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Assignment Date</label></Box><TextField fullWidth type="date" InputLabelProps={{ shrink: true }} value={assignData.from_date} onChange={(e) => setAssignData({ ...assignData, from_date: e.target.value })} InputProps={{ sx: { borderRadius: '12px' } }} /></Grid>
                             </Grid>
                         </DialogContent>
-                        <DialogActions sx={{ p: 4, pt: 1 }}><Button onClick={() => setShowAssignModal(false)} sx={{ color: 'gray', fontWeight: 'bold' }}>Cancel</Button><Button variant="contained" onClick={handleAssignSubmit} disabled={!assignData.employee_id} sx={{ px: 2, py: 1.2, borderRadius: '12px', fontWeight: '600', backgroundColor: '#ea580c' }}>Confirm Assignment</Button></DialogActions>
+                        <DialogActions sx={{ p: 2, pt: 1 }}><Button onClick={() => setShowAssignModal(false)} sx={{ color: 'gray', fontWeight: 'bold' }}>Cancel
+                            </Button><Button variant="contained" onClick={handleAssignSubmit} disabled={!assignData.employee_id} sx={{ px: 2, py: 1, borderRadius: '12px', fontWeight: '600', backgroundColor: '#ea580c' }}>Confirm Assignment
+                                </Button>
+                                </DialogActions>
                     </Dialog>
                     <Dialog open={showRepairModal} onClose={() => setShowRepairModal(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '28px', p: 1 } }}>
-                        <DialogTitle sx={{ fontWeight: 600, textTransform: 'uppercase', pt: 2, px: 4 }}>Move to Repair: {selectedAsset?.asset_id}</DialogTitle>
-                        <DialogContent sx={{ px: 4, py: 2 }}>
+                        <DialogTitle sx={{ fontWeight: 600, textTransform: 'uppercase', pt: 1, px: 3 }}>Move to Repair: {selectedAsset?.asset_id}</DialogTitle>
+                        <DialogContent sx={{ px: 4, py: 1 }}>
                             <Grid container spacing={3}>
-                                <Grid item xs={12}><Box sx={{ mb: 1 }}><label className="text-[10px] font-black text-gray-400 uppercase">Issue Description (Faced)</label></Box><TextField fullWidth multiline rows={3} placeholder="Describe the issue reported..." value={repairData.issue} onChange={e => setRepairData({ ...repairData, issue: e.target.value })} /></Grid>
-                                <Grid item xs={12}><Box sx={{ mb: 1 }}><label className="text-[10px] font-black text-gray-400 uppercase">Reported Date</label></Box><TextField fullWidth type="date" InputLabelProps={{ shrink: true }} value={repairData.date} onChange={e => setRepairData({ ...repairData, date: e.target.value })} /></Grid>
+                                <Grid item xs={12}><Box sx={{ mb: 1 }}><label className="text-[10px] font-semibold text-gray-400 uppercase">Issue Description (Faced)</label></Box><TextField fullWidth multiline rows={3} placeholder="Describe the issue reported..." value={repairData.issue} onChange={e => setRepairData({ ...repairData, issue: e.target.value })} /></Grid>
+                                <Grid item xs={12}><Box sx={{ mb: 1 }}><label className="text-[10px] font-semibold text-gray-400 uppercase">Reported Date</label></Box><TextField fullWidth type="date" InputLabelProps={{ shrink: true }} value={repairData.date} onChange={e => setRepairData({ ...repairData, date: e.target.value })} /></Grid>
                             </Grid>
                         </DialogContent>
-                        <DialogActions sx={{ p: 4, pt: 1 }}><Button onClick={() => setShowRepairModal(false)}>Cancel</Button><Button variant="contained" onClick={handleRepairSubmit} sx={{ backgroundColor: '#ef4444' }}>Move to Repairs</Button></DialogActions>
+                        <DialogActions sx={{ p: 2, pt: 1 }}><Button onClick={() => setShowRepairModal(false)}>Cancel</Button><Button variant="contained" onClick={handleRepairSubmit} sx={{ backgroundColor: '#ef4444' }}>Move to Repairs</Button></DialogActions>
                     </Dialog>
                     <Dialog open={showSolveModal} onClose={() => setShowSolveModal(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: '28px', p: 1 } }}>
                         <DialogTitle sx={{ fontWeight: 600, textTransform: 'uppercase', pt: 2, px: 4 }}>Resolve Repair: {selectedAsset?.asset_id}</DialogTitle>
